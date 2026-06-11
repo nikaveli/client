@@ -1,70 +1,69 @@
-# Getting Started with Create React App
+# Business Profile Audit
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+A React app that connects to the **Google Business Profile APIs** and produces a scored
+audit of any location you manage — profile completeness, opening hours, description,
+attributes, photos, reviews & reply rate, and Google Post activity — with prioritised
+recommendations.
 
-## Available Scripts
+Everything runs in the browser: you sign in with Google, the app calls the Business
+Profile APIs with your OAuth token, and nothing is stored anywhere.
 
-In the project directory, you can run:
+## How it works
 
-### `npm start`
+1. **Sign in with Google** — uses Google Identity Services to get an OAuth token with the
+   `https://www.googleapis.com/auth/business.manage` scope.
+2. **Pick an account & location** — accounts come from the Account Management API,
+   locations from the Business Information API.
+3. **Run the audit** — the engine in `src/audit/auditEngine.js` scores ~20 checks across
+   7 categories and renders a report with a 0–100 score and top recommendations.
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+If some data sources (reviews, media, posts, attributes) aren't available to your API
+project, those checks are marked *unavailable* and excluded from the score instead of
+failing the whole audit.
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+## Google Cloud setup (one-time)
 
-### `npm test`
+The Business Profile APIs are **request-access only**. You need:
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+1. A Google Cloud project.
+2. **Request Business Profile API access** for that project using Google's form:
+   https://developers.google.com/my-business/howtos/prereqs
+   (You must manage at least one verified Business Profile; approval usually takes a few days.)
+3. Once approved, enable these APIs in *APIs & Services → Library*:
+   - My Business Account Management API
+   - My Business Business Information API
+   - Google My Business API (legacy v4 — used for reviews, media, and posts)
+4. Configure the **OAuth consent screen** (External, add the `business.manage` scope, add
+   yourself as a test user while in testing mode).
+5. Create an **OAuth client ID** (*Credentials → Create credentials → OAuth client ID →
+   Web application*) and add your origins to *Authorized JavaScript origins*:
+   - `http://localhost:3000` for development
+   - your production URL when you deploy
 
-### `npm run build`
+## Run it
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+```bash
+cp .env.example .env   # paste your OAuth client ID into .env
+npm install
+npm start              # opens http://localhost:3000
+```
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+## Project structure
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+```
+src/audit/
+  googleAuth.js          # Google Identity Services wrapper (OAuth token)
+  gbpApi.js              # Business Profile API calls (accounts, locations, reviews, media, posts)
+  auditEngine.js         # audit rules, scoring, and recommendations
+  components/
+    AuditApp.js          # main flow: connect → pick account/location → audit
+    AuditReport.js       # scored report with per-section breakdowns
+    ScoreRing.js         # overall score dial
+```
 
-### `npm run eject`
+## Tuning the audit
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
-
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
-
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
-
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+All thresholds (description length, photo target, post freshness, review reply rate, …)
+and point weights live at the top of `src/audit/auditEngine.js`. Add a new check by
+returning another `check(...)` from one of the section builders — the score and the
+recommendations list pick it up automatically.
