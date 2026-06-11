@@ -20,6 +20,7 @@ import StorefrontIcon from '@material-ui/icons/Storefront';
 import { requestAccessToken, getClientId } from '../googleAuth';
 import { fetchAccounts, fetchLocations, fetchAuditData } from '../gbpApi';
 import { runAudit } from '../auditEngine';
+import { buildSampleAuditData } from '../sampleData';
 import AuditReport from './AuditReport';
 
 const errorMessage = (error) =>
@@ -79,6 +80,12 @@ const AuditApp = () => {
     loadLocations();
   }, [loadLocations]);
 
+  const runDemoAudit = () => {
+    const data = buildSampleAuditData();
+    setError(null);
+    setAudit({ result: runAudit(data), location: data.location, demo: true });
+  };
+
   const runLocationAudit = async () => {
     const location = locations.find((l) => l.name === locationName);
     if (!location) return;
@@ -95,6 +102,27 @@ const AuditApp = () => {
     }
   };
 
+  if (audit?.demo) {
+    return (
+      <Container maxWidth="md" style={{ paddingBottom: 48 }}>
+        <Box my={3}>
+          <Alert
+            severity="info"
+            action={(
+              <Button color="inherit" size="small" onClick={() => setAudit(null)}>
+                Exit demo
+              </Button>
+            )}
+          >
+            Demo report built from sample data — connect a real Business Profile once your API
+            access is approved.
+          </Alert>
+        </Box>
+        <AuditReport audit={audit.result} location={audit.location} />
+      </Container>
+    );
+  }
+
   if (!getClientId()) {
     return (
       <Container maxWidth="sm" style={{ marginTop: 48 }}>
@@ -106,6 +134,11 @@ const AuditApp = () => {
             creating the OAuth client and requesting Business Profile API access.
           </Typography>
         </Alert>
+        <Box textAlign="center" mt={3}>
+          <Button variant="outlined" color="primary" onClick={runDemoAudit}>
+            Preview a sample audit
+          </Button>
+        </Box>
       </Container>
     );
   }
@@ -142,6 +175,11 @@ const AuditApp = () => {
             Sign in with Google
           </Button>
           <Box mt={2}>
+            <Button color="primary" size="small" onClick={runDemoAudit}>
+              Preview a sample audit
+            </Button>
+          </Box>
+          <Box mt={1}>
             <Typography variant="caption" color="textSecondary">
               API access not approved yet?{' '}
               <Link href="https://developers.google.com/my-business/howtos/prereqs" target="_blank" rel="noopener">
