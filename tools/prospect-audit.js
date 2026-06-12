@@ -121,6 +121,7 @@ const C = {
   cardBorder: '#d9e2ec',
   line: '#b3c1d1',
   green: '#2e7d32',
+  red: '#c62828',
   white: '#ffffff',
 };
 
@@ -130,10 +131,10 @@ const LABEL_X = 70;
 const VALUE_X = 320;
 const ROW_H = 24;
 
-const drawCheckbox = (doc, x, y, checked) => {
+const drawCheckbox = (doc, x, y, checked, color = C.green) => {
   doc.save().lineWidth(1.2).strokeColor(C.navy).roundedRect(x, y, 12, 12, 2).stroke();
   if (checked) {
-    doc.lineWidth(1.8).strokeColor(C.green)
+    doc.lineWidth(1.8).strokeColor(color)
       .moveTo(x + 2.5, y + 6.5).lineTo(x + 5, y + 9.5).lineTo(x + 10, y + 2.5).stroke();
   }
   doc.restore();
@@ -156,10 +157,10 @@ const drawRow = (doc, y, label, value) => {
 const drawYesNoRow = (doc, y, label, checked) => {
   doc.font('Helvetica-Bold').fontSize(11.5).fillColor(C.ink)
     .text(label, LABEL_X, y, { lineBreak: false });
-  drawCheckbox(doc, VALUE_X, y - 1, checked === true);
+  drawCheckbox(doc, VALUE_X, y - 1, checked === true, C.green);
   doc.font('Helvetica').fontSize(11.5).fillColor(C.ink)
     .text('Yes', VALUE_X + 18, y, { lineBreak: false });
-  drawCheckbox(doc, VALUE_X + 70, y - 1, checked === false);
+  drawCheckbox(doc, VALUE_X + 70, y - 1, checked === false, C.red);
   doc.text('No', VALUE_X + 88, y, { lineBreak: false });
 };
 
