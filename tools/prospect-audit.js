@@ -137,22 +137,36 @@ const sectionHeader = (doc, title) => {
   doc.moveDown(0.7);
 };
 
-const COST_OF_INACTION = [
-  ['p', 'Google has officially changed how customers find local businesses by introducing conversational AI features like "Ask Maps."'],
-  ['p', 'Instead of typing basic keywords like "pizza near me," customers are now asking Google\'s AI complex, natural questions like: "Find me a quiet cafe nearby with fast Wi-Fi and good outdoor seating."'],
-  ['p', 'To answer these deep conversational questions, Google’s AI instantly scans active profiles, reading every recent review response, photo update, and weekly post. If your profile is sitting dormant, the consequences are immediate:'],
-  ['b', 'You Are Completely Filtered Out: If you aren’t feeding the AI fresh data (recent photos, keyword-rich review replies, active updates), it cannot verify your real-time status. The AI won’t just rank you lower—it will completely omit your business from its conversational recommendation pool.'],
-  ['b', 'Your Competitors Get Handed the Lead: When a customer asks for a trusted local recommendation, the AI selects the business with the most active "trust signals." Leaving your profile unmanaged is practically handing your closest competitor the phone call.'],
-  ['p', 'The New Reality: In the AI local search era, an inactive profile is a completely invisible profile. If Google’s AI doesn’t see you updating your business today, it will never risk recommending you to a customer tomorrow.'],
-];
-
 const PITCH =
   'AI needs to see you to recommend you. My mission is simple: keeping local businesses thriving. ' +
   'As a visual creator, I know exactly how to use professional photography and video to give Google ' +
   'the powerful "trust signals" it’s looking for in 2026. Let’s work together to fix the gaps in ' +
   'your audit and show the community—and the AI—why your business is the best choice.';
 
-const CONTACT = 'Drop me a text to chat: Nicholas LocalFirst  303-524-0591';
+const CONTACT = 'Drop me a text to chat: Nicholas  303-524-0591';
+
+const drawFooter = (doc) => {
+  const y = doc.page.height - 104;
+  doc.save().lineWidth(0.8).strokeColor(C.line).moveTo(60, y).lineTo(552, y).stroke().restore();
+
+  const brand = 'LocalFirst';
+  const url = '   www.LocalFirstOnline.com';
+  doc.font('Helvetica-Bold').fontSize(12);
+  const brandWidth = doc.widthOfString(brand);
+  doc.font('Helvetica');
+  const urlWidth = doc.widthOfString(url);
+  const startX = 60 + (492 - brandWidth - urlWidth) / 2;
+  doc.font('Helvetica-Bold').fillColor(C.ink)
+    .text(brand, startX, y + 12, { lineBreak: false, width: brandWidth + 4 });
+  doc.font('Helvetica').fillColor(C.accent)
+    .text(url, startX + brandWidth, y + 12, {
+      lineBreak: false, width: urlWidth + 4,
+      link: 'https://www.LocalFirstOnline.com', underline: true,
+    });
+
+  doc.font('Helvetica').fontSize(10).fillColor(C.line)
+    .text('*Colorado Only   303-524-0591', 60, y + 30, { width: 492, align: 'center', lineBreak: false });
+};
 
 const buildPdf = (business, outDir) => {
   const doc = new PDFDocument({ size: 'LETTER', margins: { top: 54, bottom: 54, left: 60, right: 60 } });
@@ -175,6 +189,7 @@ const buildPdf = (business, outDir) => {
   fieldLine(doc, 'Overall Rating', business.rating != null ? `${business.rating} / 5` : null);
   fieldLine(doc, 'Number of Reviews', business.reviews ?? null);
   yesNoLine(doc, 'Reply to Reviews', business.repliesToReviews);
+  fieldLine(doc, 'Number of Photo Reviews', business.photoReviews ?? null);
 
   sectionHeader(doc, 'Update Section');
   fieldLine(doc, 'Number of Photos', business.photosCount ?? null);
@@ -189,33 +204,18 @@ const buildPdf = (business, outDir) => {
       .text(`Found: ${business.socialLinks.join('   ')}`, 96, doc.y, { width: 440 });
   }
 
-  // ---- Page 2: the cost of inaction + pitch
-  doc.addPage();
-  const triY = doc.y + 2;
-  doc.save().fillColor('#f9a825')
-    .moveTo(72, triY + 18).lineTo(81, triY).lineTo(90, triY + 18).closePath().fill();
-  doc.fillColor(C.ink).font('Helvetica-Bold').fontSize(11).text('!', 79, triY + 5).restore();
-  doc.font('Helvetica-Bold').fontSize(17).fillColor(C.warn)
-    .text('The Cost of Inaction: Local Search is Now AI Search', 100, triY + 1, { width: 440 });
-  doc.moveDown(1);
+  // ---- Pitch + contact, directly under the audit
+  doc.moveDown(1.2);
+  doc.save().lineWidth(1).strokeColor(C.accent)
+    .moveTo(60, doc.y).lineTo(552, doc.y).stroke().restore();
+  doc.moveDown(0.8);
+  doc.font('Helvetica-BoldOblique').fontSize(11.5).fillColor(C.ink)
+    .text(PITCH, 60, doc.y, { width: 492, lineGap: 2.5 });
+  doc.moveDown(0.8);
+  doc.font('Helvetica-Bold').fontSize(13).fillColor(C.accent)
+    .text(CONTACT, 60, doc.y, { width: 492, align: 'center' });
 
-  COST_OF_INACTION.forEach(([kind, text]) => {
-    if (kind === 'b') {
-      doc.font('Helvetica').fontSize(11.5).fillColor(C.ink)
-        .text(`•  ${text}`, 84, doc.y, { width: 456, lineGap: 2 });
-    } else {
-      doc.font('Helvetica').fontSize(11.5).fillColor(C.ink)
-        .text(text, 60, doc.y, { width: 492, lineGap: 2 });
-    }
-    doc.moveDown(0.7);
-  });
-
-  doc.moveDown(0.5);
-  doc.font('Helvetica-BoldOblique').fontSize(12).fillColor(C.ink)
-    .text(PITCH, 60, doc.y, { width: 492, lineGap: 3 });
-  doc.moveDown(1);
-  doc.font('Helvetica-Bold').fontSize(13).fillColor(C.accent).text(CONTACT, { align: 'center' });
-
+  drawFooter(doc);
   doc.end();
   return file;
 };
@@ -262,6 +262,7 @@ const main = async () => {
       photosCount: place.photos_count ?? null,
       hasWebsite: Boolean(place.website || place.site),
       repliesToReviews: null,
+      photoReviews: null,
       lastPhotoDate: null,
       hasVideo: null,
       hasSocials: null,
@@ -276,6 +277,9 @@ const main = async () => {
         const reviewsData = r.data?.[0]?.reviews_data || [];
         if (reviewsData.length) {
           business.repliesToReviews = reviewsData.some((rev) => rev.owner_answer);
+          const withPhotos = reviewsData.filter((rev) =>
+            rev.review_img_url || rev.review_img_urls?.length || rev.review_photo_ids?.length).length;
+          business.photoReviews = `${withPhotos} of ${reviewsData.length} newest`;
         }
       } catch (err) { console.log(`  ! reviews lookup failed: ${err.message}`); }
     }
