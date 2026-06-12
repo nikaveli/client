@@ -337,12 +337,13 @@ const main = async () => {
         const domain = new URL(site).hostname.replace(/^www\./, '');
         const c = await outscraper(apiKey, '/emails-and-contacts', { query: domain });
         const socials = c.data?.[0]?.socials || {};
-        const links = Object.values(socials).filter(Boolean);
-        business.hasSocials = links.length > 0;
+        // Website builders leak their own social links into scraped pages.
+        const junk = /(squarespace|wix|shopify|godaddy|wordpress|weebly|duda|jimdo)/i;
+        const links = Object.values(socials).filter(Boolean).filter((l) => !junk.test(l));
+        // Only a confident "yes" gets auto-checked; otherwise leave blank to verify by hand.
+        business.hasSocials = links.length > 0 ? true : null;
         business.socialLinks = links.slice(0, 4);
       } catch (err) { console.log(`  ! contacts lookup failed: ${err.message}`); }
-    } else if (!site) {
-      business.hasSocials = false; // no website to find socials on
     }
 
     const file = buildPdf(business, outDir);
