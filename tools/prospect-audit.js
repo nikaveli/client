@@ -189,10 +189,10 @@ const buildPdf = (business, outDir) => {
   fieldLine(doc, 'Overall Rating', business.rating != null ? `${business.rating} / 5` : null);
   fieldLine(doc, 'Number of Reviews', business.reviews ?? null);
   yesNoLine(doc, 'Reply to Reviews', business.repliesToReviews);
-  fieldLine(doc, 'Number of Photo Reviews', business.photoReviews ?? null);
 
   sectionHeader(doc, 'Update Section');
   fieldLine(doc, 'Number of Photos', business.photosCount ?? null);
+  fieldLine(doc, 'Total Views on Photos', null); // manual fill-in
   fieldLine(doc, 'Date of last Photo update', business.lastPhotoDate ?? null);
   yesNoLine(doc, 'Video', business.hasVideo);
   yesNoLine(doc, 'Posts/Updates', null); // not publicly visible — fill in manually
@@ -262,7 +262,6 @@ const main = async () => {
       photosCount: place.photos_count ?? null,
       hasWebsite: Boolean(place.website || place.site),
       repliesToReviews: null,
-      photoReviews: null,
       lastPhotoDate: null,
       hasVideo: null,
       hasSocials: null,
@@ -277,9 +276,6 @@ const main = async () => {
         const reviewsData = r.data?.[0]?.reviews_data || [];
         if (reviewsData.length) {
           business.repliesToReviews = reviewsData.some((rev) => rev.owner_answer);
-          const withPhotos = reviewsData.filter((rev) =>
-            rev.review_img_url || rev.review_img_urls?.length || rev.review_photo_ids?.length).length;
-          business.photoReviews = `${withPhotos} of ${reviewsData.length} newest`;
         }
       } catch (err) { console.log(`  ! reviews lookup failed: ${err.message}`); }
     }
