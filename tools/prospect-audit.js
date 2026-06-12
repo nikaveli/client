@@ -9,8 +9,13 @@
  * Usage:
  *   node tools/prospect-audit.js --category "restaurant" --city "Denver" --state "CO" [--limit 10]
  *
+ * Already-audited businesses (tracked in audited-businesses.json) are skipped,
+ * so repeat runs of the same query produce fresh prospects each time.
+ *
  * Options:
- *   --limit N          businesses to fetch before franchise filtering (default 10, max 50)
+ *   --limit N          NEW businesses to audit this run (default 10, max 50)
+ *   --pool N           search pool to dig through (default: 2x limit + registry size, max 100)
+ *   --include-audited  re-audit businesses already in the registry
  *   --exclude "a,b"    extra business-name prefixes to exclude
  *   --skip-reviews     skip the per-business reviews call (saves credits; reply box left blank)
  *   --skip-photos      skip the per-business photos call (saves credits; photo date/video left blank)
@@ -38,10 +43,32 @@ const parseArgs = (argv) => {
     if (key === '--skip-reviews') args.skipReviews = true;
     else if (key === '--skip-photos') args.skipPhotos = true;
     else if (key === '--skip-contacts') args.skipContacts = true;
+    else if (key === '--include-audited') args.includeAudited = true;
     else if (key.startsWith('--')) args[key.slice(2)] = argv[(i += 1)];
   }
   return args;
 };
+
+// ----------------------------------------------- audited-business registry
+
+const REGISTRY_FILE = path.join(__dirname, '..', 'audited-businesses.json');
+
+const nameKey = (name) => `name:${(name || '').toLowerCase().replace(/[^a-z0-9]/g, '')}`;
+
+const loadRegistry = () => {
+  try {
+    return JSON.parse(fs.readFileSync(REGISTRY_FILE, 'utf8'));
+  } catch {
+    return {};
+  }
+};
+
+const saveRegistry = (registry) => {
+  fs.writeFileSync(REGISTRY_FILE, `${JSON.stringify(registry, null, 2)}\n`);
+};
+
+const isAlreadyAudited = (registry, place) =>
+  Boolean((place.place_id && registry[place.place_id]) || registry[nameKey(place.name)]);
 
 const loadApiKey = () => {
   if (process.env.OUTSCRAPER_API_KEY) return process.env.OUTSCRAPER_API_KEY;
@@ -273,19 +300,39 @@ const main = async () => {
   const outDir = path.resolve(args.out);
   fs.mkdirSync(outDir, { recursive: true });
 
+  // Businesses audited in past runs are skipped, so each run yields fresh
+  // prospects. The search pool grows with the registry to reach deeper into
+  // the results; place records are the cheapest part of the run.
+  const registry = loadRegistry();
+  const dedupe = !args.includeAudited;
+  const poolSize = Math.min(Number(args.pool) || (limit * 2 + Object.keys(registry).length), 100);
+
   const query = `${args.category}, ${args.city}, ${args.state}`;
-  console.log(`Searching Google Maps: "${query}" (limit ${limit})...`);
-  const search = await outscraper(apiKey, '/maps/search-v3', { query, limit, language: 'en', region: 'US' });
+  console.log(`Searching Google Maps: "${query}" (pool ${poolSize}, want ${limit} new)...`);
+  const search = await outscraper(apiKey, '/maps/search-v3', { query, limit: poolSize, language: 'en', region: 'US' });
   const places = (search.data?.[0] || []).filter((p) => p.name);
   console.log(`  ${places.length} businesses found`);
 
   const independents = [];
+  let skippedAudited = 0;
   for (const place of places) {
+    if (independents.length >= limit) break;
     const reason = isFranchise(place, places, extraExcludes);
-    if (reason) console.log(`  ✗ excluding "${place.name}" (${reason})`);
-    else independents.push(place);
+    if (reason) {
+      console.log(`  ✗ excluding "${place.name}" (${reason})`);
+    } else if (dedupe && isAlreadyAudited(registry, place)) {
+      skippedAudited += 1;
+    } else {
+      independents.push(place);
+    }
   }
-  console.log(`  ${independents.length} independent businesses kept\n`);
+  if (skippedAudited) {
+    console.log(`  ↷ skipped ${skippedAudited} previously audited (tracked in audited-businesses.json)`);
+  }
+  console.log(`  ${independents.length} new independent businesses to audit\n`);
+  if (independents.length < limit) {
+    console.log('  Note: fewer new businesses than requested — raise --pool, or try a nearby city or another category.\n');
+  }
 
   for (const place of independents) {
     console.log(`Auditing: ${place.name}`);
@@ -348,9 +395,17 @@ const main = async () => {
 
     const file = buildPdf(business, outDir);
     console.log(`  ✓ ${path.relative(process.cwd(), file)}`);
+
+    registry[place.place_id || nameKey(place.name)] = {
+      name: place.name,
+      query,
+      auditedAt: new Date().toISOString().slice(0, 10),
+    };
+    saveRegistry(registry);
   }
 
   console.log(`\nDone. ${independents.length} report(s) in ${path.relative(process.cwd(), outDir)}/`);
+  console.log(`Registry: ${Object.keys(registry).length} businesses tracked in audited-businesses.json`);
 };
 
 if (require.main === module) {
