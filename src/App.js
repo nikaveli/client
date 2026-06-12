@@ -1,41 +1,34 @@
-import React, { useState, useEffect } from 'react';
-import { Container, AppBar, Typography, Grow, Grid } from '@material-ui/core';
-import { useDispatch } from 'react-redux';
+import React, { useState } from 'react';
+import { AppBar, Tab, Tabs, Toolbar, Typography } from '@material-ui/core';
+import StorefrontIcon from '@material-ui/icons/Storefront';
 
-import Posts from './components/Posts/Posts';
-import Form from './components/Form/Form';
-import { getPosts } from './actions/posts';
-import useStyles from './styles';
-import travel from './components/images/travel.png';
+import AuditApp from './audit/components/AuditApp';
+import OrderPage from './order/components/OrderPage';
 
 const App = () => {
-  const [currentId, setCurrentId] = useState(0);
-  const dispatch = useDispatch();
-  const classes = useStyles();
-
-  useEffect(() => {
-    dispatch(getPosts());
-  }, [currentId, dispatch]);
+  const [page, setPage] = useState('audit');
 
   return (
-    <Container maxWidth="lg">
-      <AppBar className={classes.appBar} position="static" color="inherit">
-        <Typography className={classes.heading} variant="h2" align="center">My Travel Photos</Typography>
-        <img className={classes.image} src={travel} alt="icon" height="300" />
+    <>
+      <AppBar position="static" color="inherit" elevation={1}>
+        <Toolbar>
+          <StorefrontIcon color="primary" style={{ marginRight: 8 }} />
+          <Typography variant="h6" style={{ flexGrow: 1 }}>
+            Local Business Toolkit
+          </Typography>
+          <Tabs
+            value={page}
+            onChange={(e, value) => setPage(value)}
+            indicatorColor="primary"
+            textColor="primary"
+          >
+            <Tab label="Profile Audits" value="audit" />
+            <Tab label="Business Cards" value="order" />
+          </Tabs>
+        </Toolbar>
       </AppBar>
-      <Grow in>
-        <Container>
-          <Grid container justifyContent="space-between" alignItems="stretch" spacing={3}>
-            <Grid item xs={12} sm={7}>
-              <Posts setCurrentId={setCurrentId} />
-            </Grid>
-            <Grid item xs={12} sm={4}>
-              <Form currentId={currentId} setCurrentId={setCurrentId} />
-            </Grid>
-          </Grid>
-        </Container>
-      </Grow>
-    </Container>
+      {page === 'audit' ? <AuditApp /> : <OrderPage />}
+    </>
   );
 };
 
