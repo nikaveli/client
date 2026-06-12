@@ -48,6 +48,27 @@ npm install
 npm start              # opens http://localhost:3000
 ```
 
+## Prospect audit PDFs (no Claude credits needed)
+
+`tools/prospect-audit.js` scrapes Google Maps via Outscraper for a category in a
+city/state, excludes franchises, and writes one audit PDF per business using the
+LocalFirst report template. It runs entirely locally — the only cost is Outscraper
+credits.
+
+```bash
+# .env must contain OUTSCRAPER_API_KEY=...
+npm run audit -- --category "restaurant" --city "Denver" --state "CO" --limit 10
+```
+
+PDFs land in `audit-reports/`. Franchise exclusion uses three rules: a known-brands
+list (`tools/franchises.js`), duplicate names within the result set, and corporate
+multi-location website patterns. Add your own exclusions with `--exclude "Name1,Name2"`.
+
+Credit-saving flags: `--skip-reviews`, `--skip-photos`, `--skip-contacts` each skip one
+per-business lookup (the corresponding report field is left blank to fill by hand).
+Posts/Updates and Date of last Post are always left blank — that data isn't publicly
+scrapable — as is anything else the scrape can't see.
+
 ## Project structure
 
 ```
