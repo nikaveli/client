@@ -1,5 +1,43 @@
 # Prospect audit — all available data fields (Outscraper)
 
+## ✅ Live verification results (June 12, 2026)
+
+Verified with real scrapes against Snooze an A.M. Eatery (Denver) and 4 Denver dentists:
+
+| Wishlist item | Verdict | Live evidence |
+|---|---|---|
+| Review count + rating | ✅ Works | `reviews: 4497`, `rating: 4.7`, full star breakdown (`reviews_per_score`) |
+| Owner responses to reviews | ✅ Works | `owner_answer` + reply timestamps per review; Snooze replied to 10 of its 15 newest |
+| Photo count | ✅ Works | `photos_count: 3943` |
+| Last photo upload date | ✅ Works | Every photo record has `photo_date`, and `photo_upload_source` separates **owner uploads** (`gmb_api`) from customer uploads (`gmm_ios_*`/`gmm_android_*`) — so "last owner photo" is computable |
+| Google Posts | ❌ Unreliable | `posts` was `null` on all 5 live businesses tested; no dedicated posts endpoint exists. Treat as unavailable. |
+| Photo views | ❌ Impossible | Metric no longer exists anywhere (Google removed it) |
+| Profile claimed | ✅ Bonus | `verified: true/false` on every place record |
+
+Real per-photo record from the live scrape:
+
+```json
+{
+  "photo_id": "AF1Qip...",
+  "photo_url": "https://lh3.googleusercontent.com/...=w203-h135-k-no",
+  "photo_url_big": "https://lh3.googleusercontent.com/...=w2048",
+  "original_photo_url": "https://lh3.googleusercontent.com/...",
+  "photo_date": "5/14/2026 0:00:00",
+  "photo_upload_source": "gmb_api",
+  "photo_tags": ["food"],
+  "photo_tag_ids": ["food"],
+  "photo_source_video": null,
+  "latitude": 39.7556614,
+  "longitude": -104.9890623
+}
+```
+
+Extra per-review fields found live (beyond the documented ones): `review_img_urls`,
+`review_photo_ids`, `review_questions`, `review_pagination_id`.
+
+---
+
+
 This is a **schema-accurate sample** of what an Outscraper scrape returns for one
 business, assembled from their published field dictionaries. The business below is a
 fictionalized Denver restaurant with realistic values — we have not run a live scrape
