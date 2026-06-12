@@ -6,13 +6,19 @@ Verified with real scrapes against Snooze an A.M. Eatery (Denver) and 4 Denver d
 
 | Wishlist item | Verdict | Live evidence |
 |---|---|---|
-| Review count + rating | ✅ Works | `reviews: 4497`, `rating: 4.7`, full star breakdown (`reviews_per_score`) |
-| Owner responses to reviews | ✅ Works | `owner_answer` + reply timestamps per review; Snooze replied to 10 of its 15 newest |
-| Photo count | ✅ Works | `photos_count: 3943` |
-| Last photo upload date | ✅ Works | Every photo record has `photo_date`, and `photo_upload_source` separates **owner uploads** (`gmb_api`) from customer uploads (`gmm_ios_*`/`gmm_android_*`) — so "last owner photo" is computable |
+| Review rating | ✅ Works | `rating: 4.7`, plus full star breakdown (`reviews_per_score`) |
+| Total reviews | ✅ Works | `reviews: 4497` |
+| Reply to reviews | ✅ Works | `owner_answer` + reply timestamps per review; Snooze replied to 10 of its 15 newest |
+| Number of photos | ✅ Works | `photos_count: 3943` |
+| Date of last photo update | ✅ Works | Every photo record has `photo_date`, and `photo_upload_source` separates **owner uploads** (`gmb_api`) from customer uploads (`gmm_ios_*`/`gmm_android_*`) — so "last owner photo" is computable |
+| Video | ✅ Works | 4 of 20 sampled media records were videos — `photo_source_video` carries the video URL, with dates and tags like photos |
+| Has website | ✅ Works | `website` field on the place record (e.g. snoozeeatery.com) |
+| Social media profiles | ✅ Works* | Emails & Contacts endpoint returns `socials` (found Facebook, Instagram, LinkedIn, Twitter/X live) plus emails with names/titles, phones, and site tech data (`has_fb_pixel`, `has_google_tag`). *Scraped from the website, so occasional false positives — the live Instagram hit was wrong; show links, don't blindly trust. |
 | Google Posts | ❌ Unreliable | `posts` was `null` on all 5 live businesses tested; no dedicated posts endpoint exists. Treat as unavailable. |
-| Photo views | ❌ Impossible | Metric no longer exists anywhere (Google removed it) |
-| Profile claimed | ✅ Bonus | `verified: true/false` on every place record |
+| Total photo views | ❌ Impossible | Metric no longer exists anywhere (Google removed it for owners too) |
+
+Contacts enrichment is a separate call: `GET /emails-and-contacts?query={domain}` —
+returns `emails` (with person names/titles), `phones`, `socials`, and `site_data`.
 
 Real per-photo record from the live scrape:
 
