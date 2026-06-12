@@ -44,6 +44,7 @@ const parseArgs = (argv) => {
     else if (key === '--skip-photos') args.skipPhotos = true;
     else if (key === '--skip-contacts') args.skipContacts = true;
     else if (key === '--include-audited') args.includeAudited = true;
+    else if (key === '--blank') args.blank = true;
     else if (key.startsWith('--')) args[key.slice(2)] = argv[(i += 1)];
   }
   return args;
@@ -214,7 +215,8 @@ const drawFooter = (doc) => {
 
 const buildPdf = (business, outDir) => {
   const doc = new PDFDocument({ size: 'LETTER', margin: 0 });
-  const safeName = business.name.replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '');
+  const safeName = (business.name || 'Blank-Audit-Template')
+    .replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '');
   const file = path.join(outDir, `${safeName}.pdf`);
   doc.pipe(fs.createWriteStream(file));
   const W = doc.page.width;
@@ -230,8 +232,13 @@ const buildPdf = (business, outDir) => {
   // ---- Business name
   doc.font('Helvetica').fontSize(9).fillColor(C.gray)
     .text('BUSINESS NAME', PAGE.left, 124, { width: PAGE.width, align: 'center', characterSpacing: 1.5 });
-  doc.font('Helvetica-Bold').fontSize(19).fillColor(C.ink)
-    .text(business.name, PAGE.left, 138, { width: PAGE.width, align: 'center' });
+  if (business.name) {
+    doc.font('Helvetica-Bold').fontSize(19).fillColor(C.ink)
+      .text(business.name, PAGE.left, 138, { width: PAGE.width, align: 'center' });
+  } else {
+    doc.save().lineWidth(0.9).strokeColor(C.line)
+      .moveTo(PAGE.left + 106, 158).lineTo(PAGE.left + 406, 158).stroke().restore();
+  }
 
   // ---- Reputation card
   let y = 176;
@@ -286,6 +293,20 @@ const buildPdf = (business, outDir) => {
 
 const main = async () => {
   const args = parseArgs(process.argv);
+
+  // --blank: print an all-manual template, no scraping or API key needed.
+  if (args.blank) {
+    const outDir = path.resolve(args.out);
+    fs.mkdirSync(outDir, { recursive: true });
+    const file = buildPdf({
+      name: null, rating: null, reviews: null, repliesToReviews: null,
+      photosCount: null, lastPhotoDate: null, hasVideo: null,
+      hasWebsite: null, hasSocials: null, socialLinks: [],
+    }, outDir);
+    console.log(`Blank template: ${path.relative(process.cwd(), file)}`);
+    return;
+  }
+
   if (!args.category || !args.city || !args.state) {
     console.error('Usage: node tools/prospect-audit.js --category "restaurant" --city "Denver" --state "CO" [--limit 10]');
     process.exit(1);
