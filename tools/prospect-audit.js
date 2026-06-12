@@ -86,15 +86,25 @@ const isFranchise = (place, allPlaces, extraExcludes) => {
 // ------------------------------------------------------------ pdf builder
 
 const C = {
-  ink: '#1a1a2e',
-  accent: '#1565c0',
-  warn: '#b26a00',
-  line: '#9e9e9e',
+  navy: '#16324f',
+  gold: '#f2b33d',
+  ink: '#1f2933',
+  gray: '#7b8794',
+  cardBg: '#f4f7fb',
+  cardBorder: '#d9e2ec',
+  line: '#b3c1d1',
   green: '#2e7d32',
+  white: '#ffffff',
 };
 
+// Fixed layout grid: labels at LABEL_X, values/checkboxes aligned at VALUE_X.
+const PAGE = { left: 50, width: 512 };
+const LABEL_X = 70;
+const VALUE_X = 320;
+const ROW_H = 24;
+
 const drawCheckbox = (doc, x, y, checked) => {
-  doc.save().lineWidth(1.2).strokeColor(C.ink).rect(x, y, 12, 12).stroke();
+  doc.save().lineWidth(1.2).strokeColor(C.navy).roundedRect(x, y, 12, 12, 2).stroke();
   if (checked) {
     doc.lineWidth(1.8).strokeColor(C.green)
       .moveTo(x + 2.5, y + 6.5).lineTo(x + 5, y + 9.5).lineTo(x + 10, y + 2.5).stroke();
@@ -102,39 +112,43 @@ const drawCheckbox = (doc, x, y, checked) => {
   doc.restore();
 };
 
-/** "Label:  value" on one line; if value is null, draws a fill-in-by-hand line. */
-const fieldLine = (doc, label, value, { indent = 72 } = {}) => {
-  const y = doc.y;
-  doc.font('Helvetica-Bold').fontSize(12).fillColor(C.ink).text(`${label}: `, indent, y, { continued: value !== null });
-  if (value !== null) {
-    doc.font('Helvetica').text(String(value));
+/** Label left, value in the aligned column; null value = fill-in-by-hand line. */
+const drawRow = (doc, y, label, value) => {
+  doc.font('Helvetica-Bold').fontSize(11.5).fillColor(C.ink)
+    .text(label, LABEL_X, y, { lineBreak: false });
+  if (value !== null && value !== undefined) {
+    doc.font('Helvetica').fontSize(11.5).fillColor(C.ink)
+      .text(String(value), VALUE_X, y, { lineBreak: false });
   } else {
-    const labelWidth = doc.widthOfString(`${label}: `) + 4;
-    doc.save().lineWidth(0.8).strokeColor(C.line)
-      .moveTo(indent + labelWidth, y + 12).lineTo(540, y + 12).stroke().restore();
-    doc.text('', indent, y + 14); // advance the cursor past the blank line
+    doc.save().lineWidth(0.9).strokeColor(C.line)
+      .moveTo(VALUE_X, y + 11).lineTo(540, y + 11).stroke().restore();
   }
-  doc.moveDown(0.8);
 };
 
-/** "Label:" followed by Yes/No checkboxes. checked: true=Yes, false=No, null=both blank. */
-const yesNoLine = (doc, label, checked, { indent = 72 } = {}) => {
-  const y = doc.y;
-  doc.font('Helvetica-Bold').fontSize(12).fillColor(C.ink).text(`${label}:`, indent, y);
-  const boxX = indent + doc.widthOfString(`${label}:`) + 24;
-  drawCheckbox(doc, boxX, y - 1, checked === true);
-  doc.font('Helvetica').text('Yes', boxX + 18, y);
-  drawCheckbox(doc, boxX + 70, y - 1, checked === false);
-  doc.text('No', boxX + 88, y);
-  doc.moveDown(0.9);
+/** Label left, Yes/No checkboxes in the aligned column. true=Yes, false=No, null=blank. */
+const drawYesNoRow = (doc, y, label, checked) => {
+  doc.font('Helvetica-Bold').fontSize(11.5).fillColor(C.ink)
+    .text(label, LABEL_X, y, { lineBreak: false });
+  drawCheckbox(doc, VALUE_X, y - 1, checked === true);
+  doc.font('Helvetica').fontSize(11.5).fillColor(C.ink)
+    .text('Yes', VALUE_X + 18, y, { lineBreak: false });
+  drawCheckbox(doc, VALUE_X + 70, y - 1, checked === false);
+  doc.text('No', VALUE_X + 88, y, { lineBreak: false });
 };
 
-const sectionHeader = (doc, title) => {
-  doc.moveDown(0.4);
-  doc.font('Helvetica-Bold').fontSize(14).fillColor(C.accent).text(title, 60);
-  doc.save().lineWidth(1).strokeColor(C.accent)
-    .moveTo(60, doc.y + 2).lineTo(552, doc.y + 2).stroke().restore();
-  doc.moveDown(0.7);
+/** Bordered card with a tinted title strip; returns where rows start and total height. */
+const drawCard = (doc, y, title, rowCount, extraH = 0) => {
+  const h = 40 + rowCount * ROW_H + extraH;
+  doc.save();
+  doc.roundedRect(PAGE.left, y, PAGE.width, h, 8).fillColor(C.white).fill();
+  doc.roundedRect(PAGE.left, y, PAGE.width, 28, 8).fillColor(C.cardBg).fill();
+  doc.rect(PAGE.left, y + 14, PAGE.width, 14).fillColor(C.cardBg).fill();
+  doc.roundedRect(PAGE.left, y, PAGE.width, h, 8).lineWidth(1).strokeColor(C.cardBorder).stroke();
+  doc.rect(PAGE.left, y + 6, 4, 16).fillColor(C.gold).fill();
+  doc.font('Helvetica-Bold').fontSize(12).fillColor(C.navy)
+    .text(title.toUpperCase(), LABEL_X - 6, y + 8, { characterSpacing: 1, lineBreak: false });
+  doc.restore();
+  return { rowsY: y + 38, h };
 };
 
 const PITCH =
@@ -146,8 +160,10 @@ const PITCH =
 const CONTACT = 'Drop me a text to chat: Nicholas  303-524-0591';
 
 const drawFooter = (doc) => {
-  const y = doc.page.height - 104;
-  doc.save().lineWidth(0.8).strokeColor(C.line).moveTo(60, y).lineTo(552, y).stroke().restore();
+  const H = doc.page.height;
+  const W = doc.page.width;
+  doc.rect(0, H - 64, W, 3).fillColor(C.gold).fill();
+  doc.rect(0, H - 61, W, 61).fillColor(C.navy).fill();
 
   const brand = 'LocalFirst';
   const url = '   www.LocalFirstOnline.com';
@@ -155,65 +171,83 @@ const drawFooter = (doc) => {
   const brandWidth = doc.widthOfString(brand);
   doc.font('Helvetica');
   const urlWidth = doc.widthOfString(url);
-  const startX = 60 + (492 - brandWidth - urlWidth) / 2;
-  doc.font('Helvetica-Bold').fillColor(C.ink)
-    .text(brand, startX, y + 12, { lineBreak: false, width: brandWidth + 4 });
-  doc.font('Helvetica').fillColor(C.accent)
-    .text(url, startX + brandWidth, y + 12, {
+  const startX = (W - brandWidth - urlWidth) / 2;
+  doc.font('Helvetica-Bold').fillColor(C.white)
+    .text(brand, startX, H - 48, { lineBreak: false, width: brandWidth + 4 });
+  doc.font('Helvetica').fillColor(C.gold)
+    .text(url, startX + brandWidth, H - 48, {
       lineBreak: false, width: urlWidth + 4,
       link: 'https://www.LocalFirstOnline.com', underline: true,
     });
 
-  doc.font('Helvetica').fontSize(10).fillColor(C.line)
-    .text('*Colorado Only   303-524-0591', 60, y + 30, { width: 492, align: 'center', lineBreak: false });
+  doc.font('Helvetica').fontSize(9).fillColor('#b8c7d9')
+    .text('*Colorado Only   303-524-0591', 0, H - 27, { width: W, align: 'center', lineBreak: false });
 };
 
 const buildPdf = (business, outDir) => {
-  const doc = new PDFDocument({ size: 'LETTER', margins: { top: 54, bottom: 54, left: 60, right: 60 } });
+  const doc = new PDFDocument({ size: 'LETTER', margin: 0 });
   const safeName = business.name.replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '');
   const file = path.join(outDir, `${safeName}.pdf`);
   doc.pipe(fs.createWriteStream(file));
+  const W = doc.page.width;
 
-  // ---- Page 1: the audit
-  doc.font('Helvetica-Bold').fontSize(22).fillColor(C.ink)
-    .text('Google Business Profile AI Audit Report', { align: 'center' });
-  doc.moveDown(0.2);
-  doc.font('Helvetica-Oblique').fontSize(14).fillColor(C.accent)
-    .text('How your business stands today!', { align: 'center' });
-  doc.moveDown(1.2);
+  // ---- Header band
+  doc.rect(0, 0, W, 104).fillColor(C.navy).fill();
+  doc.rect(0, 104, W, 3).fillColor(C.gold).fill();
+  doc.font('Helvetica-Bold').fontSize(21).fillColor(C.white)
+    .text('Google Business Profile AI Audit Report', PAGE.left, 30, { width: PAGE.width, align: 'center' });
+  doc.font('Helvetica-Oblique').fontSize(13).fillColor(C.gold)
+    .text('How your business stands today!', PAGE.left, 64, { width: PAGE.width, align: 'center' });
 
-  fieldLine(doc, 'Business name', business.name, { indent: 60 });
-  doc.moveDown(0.3);
+  // ---- Business name
+  doc.font('Helvetica').fontSize(9).fillColor(C.gray)
+    .text('BUSINESS NAME', PAGE.left, 124, { width: PAGE.width, align: 'center', characterSpacing: 1.5 });
+  doc.font('Helvetica-Bold').fontSize(19).fillColor(C.ink)
+    .text(business.name, PAGE.left, 138, { width: PAGE.width, align: 'center' });
 
-  sectionHeader(doc, 'Reputation Section');
-  fieldLine(doc, 'Overall Rating', business.rating != null ? `${business.rating} / 5` : null);
-  fieldLine(doc, 'Number of Reviews', business.reviews ?? null);
-  yesNoLine(doc, 'Reply to Reviews', business.repliesToReviews);
+  // ---- Reputation card
+  let y = 176;
+  let card = drawCard(doc, y, 'Reputation Section', 3);
+  let ry = card.rowsY;
+  drawRow(doc, ry, 'Overall Rating', business.rating != null ? `${business.rating} / 5` : null); ry += ROW_H;
+  drawRow(doc, ry, 'Number of Reviews', business.reviews ?? null); ry += ROW_H;
+  drawYesNoRow(doc, ry, 'Reply to Reviews', business.repliesToReviews);
+  y += card.h + 12;
 
-  sectionHeader(doc, 'Update Section');
-  fieldLine(doc, 'Number of Photos', business.photosCount ?? null);
-  fieldLine(doc, 'Total Views on Photos', null); // manual fill-in
-  fieldLine(doc, 'Date of last Photo update', business.lastPhotoDate ?? null);
-  yesNoLine(doc, 'Video', business.hasVideo);
-  yesNoLine(doc, 'Posts/Updates', null); // not publicly visible — fill in manually
-  fieldLine(doc, 'Date of last Post', null); // manual
-  yesNoLine(doc, 'Website', business.hasWebsite);
-  yesNoLine(doc, 'Social Media', business.hasSocials);
+  // ---- Update card
+  const socialExtra = business.socialLinks?.length ? 14 : 0;
+  card = drawCard(doc, y, 'Update Section', 8, socialExtra);
+  ry = card.rowsY;
+  drawRow(doc, ry, 'Number of Photos', business.photosCount ?? null); ry += ROW_H;
+  drawRow(doc, ry, 'Total Views on Photos', null); ry += ROW_H; // manual fill-in
+  drawRow(doc, ry, 'Date of last Photo update', business.lastPhotoDate ?? null); ry += ROW_H;
+  drawYesNoRow(doc, ry, 'Video', business.hasVideo); ry += ROW_H;
+  drawYesNoRow(doc, ry, 'Posts/Updates', null); ry += ROW_H; // not publicly visible — manual
+  drawRow(doc, ry, 'Date of last Post', null); ry += ROW_H; // manual
+  drawYesNoRow(doc, ry, 'Website', business.hasWebsite); ry += ROW_H;
+  drawYesNoRow(doc, ry, 'Social Media', business.hasSocials); ry += ROW_H;
   if (business.socialLinks?.length) {
-    doc.font('Helvetica').fontSize(9).fillColor(C.line)
-      .text(`Found: ${business.socialLinks.join('   ')}`, 96, doc.y, { width: 440 });
+    doc.font('Helvetica').fontSize(8).fillColor(C.gray)
+      .text(`Found: ${business.socialLinks.join('   ')}`, LABEL_X, ry - 8,
+        { width: 472, height: 18, ellipsis: true });
   }
+  y += card.h + 14;
 
-  // ---- Pitch + contact, directly under the audit
-  doc.moveDown(1.2);
-  doc.save().lineWidth(1).strokeColor(C.accent)
-    .moveTo(60, doc.y).lineTo(552, doc.y).stroke().restore();
-  doc.moveDown(0.8);
-  doc.font('Helvetica-BoldOblique').fontSize(11.5).fillColor(C.ink)
-    .text(PITCH, 60, doc.y, { width: 492, lineGap: 2.5 });
-  doc.moveDown(0.8);
-  doc.font('Helvetica-Bold').fontSize(13).fillColor(C.accent)
-    .text(CONTACT, 60, doc.y, { width: 492, align: 'center' });
+  // ---- Pitch callout
+  doc.font('Helvetica-BoldOblique').fontSize(10.5);
+  const pitchH = doc.heightOfString(PITCH, { width: 462, lineGap: 1.8 }) + 22;
+  doc.roundedRect(PAGE.left, y, PAGE.width, pitchH, 8).fillColor(C.cardBg).fill();
+  doc.rect(PAGE.left, y + 6, 4, pitchH - 12).fillColor(C.gold).fill();
+  doc.font('Helvetica-BoldOblique').fontSize(10.5).fillColor(C.ink)
+    .text(PITCH, LABEL_X, y + 11, { width: 462, lineGap: 1.8 });
+  y += pitchH + 13;
+
+  // ---- Contact CTA pill
+  doc.font('Helvetica-Bold').fontSize(12.5);
+  const ctaW = doc.widthOfString(CONTACT) + 48;
+  const ctaX = (W - ctaW) / 2;
+  doc.roundedRect(ctaX, y, ctaW, 32, 16).fillColor(C.navy).fill();
+  doc.fillColor(C.white).text(CONTACT, ctaX, y + 9, { width: ctaW, align: 'center', lineBreak: false });
 
   drawFooter(doc);
   doc.end();
