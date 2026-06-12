@@ -27,7 +27,7 @@ const KNOWN_FRANCHISES = require('./franchises');
 
 const API_BASE = 'https://api.app.outscraper.com';
 const REVIEWS_SAMPLE = 10; // newest reviews checked for owner replies
-const PHOTOS_SAMPLE = 40; // newest media checked for dates and video
+const OWNER_PHOTOS_LIMIT = 1000; // max owner-uploaded photos fetched per business
 
 // ---------------------------------------------------------------- helpers
 
@@ -259,7 +259,7 @@ const main = async () => {
       name: place.name,
       rating: place.rating ?? null,
       reviews: place.reviews ?? null,
-      photosCount: place.photos_count ?? null,
+      photosCount: null, // owner-uploaded count, filled from the photos lookup
       hasWebsite: Boolean(place.website || place.site),
       repliesToReviews: null,
       lastPhotoDate: null,
@@ -282,15 +282,18 @@ const main = async () => {
 
     if (!args.skipPhotos && place.place_id && (place.photos_count ?? 0) > 0) {
       try {
+        // Only owner-uploaded media counts as profile activity — customer
+        // photos are excluded, matching the "by owner" view in Google Maps.
         const p = await outscraper(apiKey, '/maps/photos-v3', {
-          query: place.place_id, photosLimit: PHOTOS_SAMPLE,
+          query: place.place_id, photosLimit: OWNER_PHOTOS_LIMIT, tag: 'by_owner',
         });
         const photos = p.data?.[0]?.[0]?.photos_data || [];
+        business.photosCount = photos.length;
         const dates = photos.map((ph) => new Date(ph.photo_date)).filter((d) => !Number.isNaN(d));
         if (dates.length) {
           business.lastPhotoDate = new Date(Math.max(...dates)).toLocaleDateString('en-US');
         }
-        business.hasVideo = photos.some((ph) => ph.photo_source_video) ? true : photos.length ? false : null;
+        business.hasVideo = photos.some((ph) => ph.photo_source_video);
       } catch (err) { console.log(`  ! photos lookup failed: ${err.message}`); }
     }
 
