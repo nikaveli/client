@@ -1,0 +1,50 @@
+name: Weekly prospect audits
+
+on:
+  schedule:
+    # Mondays 8:00 AM Denver time (14:00 UTC). Edit the cron to change cadence.
+    - cron: '0 14 * * 1'
+  workflow_dispatch:
+    inputs:
+      category:
+        description: Business category (e.g. restaurant, dentist, salon)
+        default: restaurant
+      city:
+        description: City
+        default: Denver
+      state:
+        description: State code
+        default: CO
+      limit:
+        description: Max businesses (up to 50)
+        default: '10'
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      - name: Run prospect audit
+        env:
+          OUTSCRAPER_API_KEY: ${{ secrets.OUTSCRAPER_API_KEY }}
+        run: >
+          node tools/prospect-audit.js
+          --category "${{ github.event.inputs.category || 'restaurant' }}"
+          --city "${{ github.event.inputs.city || 'Denver' }}"
+          --state "${{ github.event.inputs.state || 'CO' }}"
+          --limit "${{ github.event.inputs.limit || '10' }}"
+
+      - name: Upload audit PDFs
+        uses: actions/upload-artifact@v4
+        with:
+          name: audit-reports-${{ github.run_number }}
+          path: audit-reports/
+          retention-days: 90
