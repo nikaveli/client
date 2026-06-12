@@ -22,6 +22,8 @@ on:
 jobs:
   audit:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write # to commit the audited-businesses registry back
     steps:
       - uses: actions/checkout@v4
 
@@ -48,3 +50,11 @@ jobs:
           name: audit-reports-${{ github.run_number }}
           path: audit-reports/
           retention-days: 90
+
+      - name: Save audited-businesses registry
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add audited-businesses.json
+          git diff --cached --quiet || git commit -m "Update audited businesses registry"
+          git push

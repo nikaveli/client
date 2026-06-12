@@ -1,0 +1,52 @@
+{
+  "name:corinnedenver": {
+    "name": "Corinne Denver",
+    "query": "restaurant, Denver, CO",
+    "auditedAt": "2026-06-12"
+  },
+  "name:levendelico": {
+    "name": "Leven Deli Co.",
+    "query": "restaurant, Denver, CO",
+    "auditedAt": "2026-06-12"
+  },
+  "name:almafondafina": {
+    "name": "Alma Fonda Fina",
+    "query": "restaurant, Denver, CO",
+    "auditedAt": "2026-06-12"
+  },
+  "name:tavernetta": {
+    "name": "Tavernetta",
+    "query": "restaurant, Denver, CO",
+    "auditedAt": "2026-06-12"
+  },
+  "name:thevelvetcellar": {
+    "name": "The Velvet Cellar",
+    "query": "restaurant, Denver, CO",
+    "auditedAt": "2026-06-12"
+  },
+  "name:mercantile": {
+    "name": "Mercantile",
+    "query": "restaurant, Denver, CO",
+    "auditedAt": "2026-06-12"
+  },
+  "name:steubensuptown": {
+    "name": "Steuben's Uptown",
+    "query": "restaurant, Denver, CO",
+    "auditedAt": "2026-06-12"
+  },
+  "name:rioja": {
+    "name": "Rioja",
+    "query": "restaurant, Denver, CO",
+    "auditedAt": "2026-06-12"
+  },
+  "name:mezcaleriaalma": {
+    "name": "Mezcaleria Alma",
+    "query": "restaurant, Denver, CO",
+    "auditedAt": "2026-06-12"
+  },
+  "name:edgerestaurantbar": {
+    "name": "EDGE Restaurant & Bar",
+    "query": "restaurant, Denver, CO",
+    "auditedAt": "2026-06-12"
+  }
+}
