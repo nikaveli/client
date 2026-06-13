@@ -240,8 +240,22 @@ const buildPdf = (business, outDir) => {
       .moveTo(PAGE.left + 106, 158).lineTo(PAGE.left + 406, 158).stroke().restore();
   }
 
+  // ---- Address + phone, auto-sized down until it fits one line
+  const contactParts = [business.address, business.phone].filter(Boolean);
+  if (contactParts.length) {
+    const contact = contactParts.join('   •   ');
+    let cf = 11;
+    doc.font('Helvetica');
+    while (cf > 7 && doc.fontSize(cf).widthOfString(contact) > PAGE.width) cf -= 0.5;
+    doc.fontSize(cf).fillColor(C.gray)
+      .text(contact, PAGE.left, 164, { width: PAGE.width, align: 'center', lineBreak: false });
+  } else if (!business.name) {
+    doc.save().lineWidth(0.9).strokeColor(C.line)
+      .moveTo(PAGE.left + 146, 176).lineTo(PAGE.left + 366, 176).stroke().restore();
+  }
+
   // ---- Reputation card
-  let y = 176;
+  let y = 192;
   let card = drawCard(doc, y, 'Reputation Section', 3);
   let ry = card.rowsY;
   drawRow(doc, ry, 'Overall Rating', business.rating != null ? `${business.rating} / 5` : null); ry += ROW_H;
@@ -299,9 +313,9 @@ const main = async () => {
     const outDir = path.resolve(args.out);
     fs.mkdirSync(outDir, { recursive: true });
     const file = buildPdf({
-      name: null, rating: null, reviews: null, repliesToReviews: null,
-      photosCount: null, lastPhotoDate: null, hasVideo: null,
-      hasWebsite: null, hasSocials: null, socialLinks: [],
+      name: null, address: null, phone: null, rating: null, reviews: null,
+      repliesToReviews: null, photosCount: null, lastPhotoDate: null,
+      hasVideo: null, hasWebsite: null, hasSocials: null, socialLinks: [],
     }, outDir);
     console.log(`Blank template: ${path.relative(process.cwd(), file)}`);
     return;
@@ -360,6 +374,8 @@ const main = async () => {
     console.log(`Auditing: ${place.name}`);
     const business = {
       name: place.name,
+      address: place.address || place.full_address || null,
+      phone: place.phone || null,
       rating: place.rating ?? null,
       reviews: place.reviews ?? null,
       photosCount: null, // owner-uploaded count, filled from the photos lookup
