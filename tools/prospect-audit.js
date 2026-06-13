@@ -44,6 +44,7 @@ const parseArgs = (argv) => {
     else if (key === '--skip-photos') args.skipPhotos = true;
     else if (key === '--skip-contacts') args.skipContacts = true;
     else if (key === '--include-audited') args.includeAudited = true;
+    else if (key === '--blank') args.blank = true;
     else if (key.startsWith('--')) args[key.slice(2)] = argv[(i += 1)];
   }
   return args;
@@ -214,7 +215,8 @@ const drawFooter = (doc) => {
 
 const buildPdf = (business, outDir) => {
   const doc = new PDFDocument({ size: 'LETTER', margin: 0 });
-  const safeName = business.name.replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '');
+  const safeName = (business.name || 'Blank-Audit-Template')
+    .replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '');
   const file = path.join(outDir, `${safeName}.pdf`);
   doc.pipe(fs.createWriteStream(file));
   const W = doc.page.width;
@@ -230,11 +232,30 @@ const buildPdf = (business, outDir) => {
   // ---- Business name
   doc.font('Helvetica').fontSize(9).fillColor(C.gray)
     .text('BUSINESS NAME', PAGE.left, 124, { width: PAGE.width, align: 'center', characterSpacing: 1.5 });
-  doc.font('Helvetica-Bold').fontSize(19).fillColor(C.ink)
-    .text(business.name, PAGE.left, 138, { width: PAGE.width, align: 'center' });
+  if (business.name) {
+    doc.font('Helvetica-Bold').fontSize(19).fillColor(C.ink)
+      .text(business.name, PAGE.left, 138, { width: PAGE.width, align: 'center' });
+  } else {
+    doc.save().lineWidth(0.9).strokeColor(C.line)
+      .moveTo(PAGE.left + 106, 158).lineTo(PAGE.left + 406, 158).stroke().restore();
+  }
+
+  // ---- Address + phone, auto-sized down until it fits one line
+  const contactParts = [business.address, business.phone].filter(Boolean);
+  if (contactParts.length) {
+    const contact = contactParts.join('   •   ');
+    let cf = 11;
+    doc.font('Helvetica');
+    while (cf > 7 && doc.fontSize(cf).widthOfString(contact) > PAGE.width) cf -= 0.5;
+    doc.fontSize(cf).fillColor(C.gray)
+      .text(contact, PAGE.left, 164, { width: PAGE.width, align: 'center', lineBreak: false });
+  } else if (!business.name) {
+    doc.save().lineWidth(0.9).strokeColor(C.line)
+      .moveTo(PAGE.left + 146, 176).lineTo(PAGE.left + 366, 176).stroke().restore();
+  }
 
   // ---- Reputation card
-  let y = 176;
+  let y = 192;
   let card = drawCard(doc, y, 'Reputation Section', 3);
   let ry = card.rowsY;
   drawRow(doc, ry, 'Overall Rating', business.rating != null ? `${business.rating} / 5` : null); ry += ROW_H;
@@ -286,6 +307,20 @@ const buildPdf = (business, outDir) => {
 
 const main = async () => {
   const args = parseArgs(process.argv);
+
+  // --blank: print an all-manual template, no scraping or API key needed.
+  if (args.blank) {
+    const outDir = path.resolve(args.out);
+    fs.mkdirSync(outDir, { recursive: true });
+    const file = buildPdf({
+      name: null, address: null, phone: null, rating: null, reviews: null,
+      repliesToReviews: null, photosCount: null, lastPhotoDate: null,
+      hasVideo: null, hasWebsite: null, hasSocials: null, socialLinks: [],
+    }, outDir);
+    console.log(`Blank template: ${path.relative(process.cwd(), file)}`);
+    return;
+  }
+
   if (!args.category || !args.city || !args.state) {
     console.error('Usage: node tools/prospect-audit.js --category "restaurant" --city "Denver" --state "CO" [--limit 10]');
     process.exit(1);
@@ -339,6 +374,8 @@ const main = async () => {
     console.log(`Auditing: ${place.name}`);
     const business = {
       name: place.name,
+      address: place.address || place.full_address || null,
+      phone: place.phone || null,
       rating: place.rating ?? null,
       reviews: place.reviews ?? null,
       photosCount: null, // owner-uploaded count, filled from the photos lookup
