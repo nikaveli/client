@@ -16,6 +16,8 @@
  *   --limit N          NEW businesses to audit this run (default 10, max 50)
  *   --pool N           search pool to dig through (default: 2x limit + registry size, max 100)
  *   --include-audited  re-audit businesses already in the registry
+ *   --csv-only         write only the route.csv (name/address/city/state/zip),
+ *                      one search call, no PDFs — for driving-route apps
  *   --exclude "a,b"    extra business-name prefixes to exclude
  *   --skip-reviews     skip the per-business reviews call (saves credits; reply box left blank)
  *   --skip-photos      skip the per-business photos call (saves credits; photo date/video left blank)
@@ -45,6 +47,7 @@ const parseArgs = (argv) => {
     else if (key === '--skip-contacts') args.skipContacts = true;
     else if (key === '--include-audited') args.includeAudited = true;
     else if (key === '--blank') args.blank = true;
+    else if (key === '--csv-only') args.csvOnly = true;
     else if (key.startsWith('--')) args[key.slice(2)] = argv[(i += 1)];
   }
   return args;
@@ -70,6 +73,33 @@ const saveRegistry = (registry) => {
 
 const isAlreadyAudited = (registry, place) =>
   Boolean((place.place_id && registry[place.place_id]) || registry[nameKey(place.name)]);
+
+// --------------------------------------------------- route CSV (for map apps)
+
+/** Split address fields for a route-planning CSV. */
+const addressFields = (place) => ({
+  name: place.name,
+  address: place.street || (place.address || place.full_address || '').split(',')[0] || '',
+  city: place.city || '',
+  state: place.state_code || place.state || '',
+  zip: place.postal_code || '',
+});
+
+const csvCell = (v) => {
+  const s = v == null ? '' : String(v);
+  return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+};
+
+const writeRouteCsv = (rows, outDir) => {
+  const header = ['Business Name', 'Address', 'City', 'State', 'Zip'];
+  const lines = [header.join(',')];
+  for (const r of rows) {
+    lines.push([r.name, r.address, r.city, r.state, r.zip].map(csvCell).join(','));
+  }
+  const file = path.join(outDir, 'route.csv');
+  fs.writeFileSync(file, `${lines.join('\n')}\n`);
+  return file;
+};
 
 const loadApiKey = () => {
   if (process.env.OUTSCRAPER_API_KEY) return process.env.OUTSCRAPER_API_KEY;
@@ -336,6 +366,23 @@ const main = async () => {
   const outDir = path.resolve(args.out);
   fs.mkdirSync(outDir, { recursive: true });
 
+  // --csv-only: just the route file. One search call, no per-business lookups
+  // or PDFs — for rebuilding a driving route from businesses already audited.
+  if (args.csvOnly) {
+    const q = `${args.category}, ${args.city}, ${args.state}`;
+    const poolSize = Math.min(Number(args.pool) || limit, 100);
+    console.log(`Searching Google Maps: "${q}" (${poolSize} results)...`);
+    const res = await outscraper(apiKey, '/maps/search-v3', { query: q, limit: poolSize, language: 'en', region: 'US' });
+    const found = (res.data?.[0] || []).filter((p) => p.name);
+    const rows = found
+      .filter((p) => !isFranchise(p, found, extraExcludes))
+      .slice(0, limit)
+      .map(addressFields);
+    const csv = writeRouteCsv(rows, outDir);
+    console.log(`\nWrote ${rows.length} businesses to ${path.relative(process.cwd(), csv)}`);
+    return;
+  }
+
   // Businesses audited in past runs are skipped, so each run yields fresh
   // prospects. The search pool grows with the registry to reach deeper into
   // the results; place records are the cheapest part of the run.
@@ -370,8 +417,10 @@ const main = async () => {
     console.log('  Note: fewer new businesses than requested — raise --pool, or try a nearby city or another category.\n');
   }
 
+  const routeRows = [];
   for (const place of independents) {
     console.log(`Auditing: ${place.name}`);
+    routeRows.push(addressFields(place));
     const business = {
       name: place.name,
       address: place.address || place.full_address || null,
@@ -440,6 +489,11 @@ const main = async () => {
       auditedAt: new Date().toISOString().slice(0, 10),
     };
     saveRegistry(registry);
+  }
+
+  if (routeRows.length) {
+    const csv = writeRouteCsv(routeRows, outDir);
+    console.log(`  ✓ route file: ${path.relative(process.cwd(), csv)}`);
   }
 
   console.log(`\nDone. ${independents.length} report(s) in ${path.relative(process.cwd(), outDir)}/`);
