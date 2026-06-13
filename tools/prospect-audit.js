@@ -48,6 +48,7 @@ const parseArgs = (argv) => {
     else if (key === '--include-audited') args.includeAudited = true;
     else if (key === '--blank') args.blank = true;
     else if (key === '--csv-only') args.csvOnly = true;
+    else if (key === '--audited-only') args.auditedOnly = true;
     else if (key.startsWith('--')) args[key.slice(2)] = argv[(i += 1)];
   }
   return args;
@@ -370,16 +371,26 @@ const main = async () => {
   // or PDFs — for rebuilding a driving route from businesses already audited.
   if (args.csvOnly) {
     const q = `${args.category}, ${args.city}, ${args.state}`;
-    const poolSize = Math.min(Number(args.pool) || limit, 100);
+    // Mirror the audit's pool (2x limit) so the route file matches the set
+    // that was audited after franchise filtering.
+    const poolSize = Math.min(Number(args.pool) || limit * 2, 100);
     console.log(`Searching Google Maps: "${q}" (${poolSize} results)...`);
     const res = await outscraper(apiKey, '/maps/search-v3', { query: q, limit: poolSize, language: 'en', region: 'US' });
     const found = (res.data?.[0] || []).filter((p) => p.name);
-    const rows = found
-      .filter((p) => !isFranchise(p, found, extraExcludes))
-      .slice(0, limit)
-      .map(addressFields);
-    const csv = writeRouteCsv(rows, outDir);
-    console.log(`\nWrote ${rows.length} businesses to ${path.relative(process.cwd(), csv)}`);
+    let kept;
+    if (args.auditedOnly) {
+      // Exactly the businesses already in the registry (what was audited).
+      const registry = loadRegistry();
+      kept = found.filter((p) => isAlreadyAudited(registry, p));
+      const auditedCount = Object.values(registry).filter((v) => v.query === q).length;
+      if (kept.length < auditedCount) {
+        console.log(`  Note: ${auditedCount - kept.length} audited business(es) not in the top ${poolSize} search results — raise --pool to capture them.`);
+      }
+    } else {
+      kept = found.filter((p) => !isFranchise(p, found, extraExcludes)).slice(0, limit);
+    }
+    const csv = writeRouteCsv(kept.map(addressFields), outDir);
+    console.log(`\nWrote ${kept.length} businesses to ${path.relative(process.cwd(), csv)}`);
     return;
   }
 
