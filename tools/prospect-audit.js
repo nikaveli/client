@@ -295,11 +295,16 @@ const buildPdf = (business, outDir) => {
   y += card.h + 12;
 
   // ---- Update card
+  const TAGLINE_H = 16;
   const socialExtra = business.socialLinks?.length ? 14 : 0;
-  card = drawCard(doc, y, 'Update Section', 8, socialExtra);
+  card = drawCard(doc, y, 'Update Section', 8, socialExtra + TAGLINE_H);
   ry = card.rowsY;
   drawRow(doc, ry, 'Number of Photos', business.photosCount ?? null); ry += ROW_H;
   drawRow(doc, ry, 'Total Views on Photos', null); ry += ROW_H; // manual fill-in
+  doc.font('Helvetica-BoldOblique').fontSize(9.5).fillColor(C.navy)
+    .text("Let's turn all these photo views into paying customers!", LABEL_X, ry - 6,
+      { width: 472, lineBreak: false });
+  ry += TAGLINE_H;
   drawRow(doc, ry, 'Date of last Photo update', business.lastPhotoDate ?? null); ry += ROW_H;
   drawYesNoRow(doc, ry, 'Video', business.hasVideo); ry += ROW_H;
   drawYesNoRow(doc, ry, 'Posts/Updates', null); ry += ROW_H; // not publicly visible — manual
