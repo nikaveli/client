@@ -161,7 +161,15 @@ const C = {
 const PAGE = { left: 50, width: 512 };
 const LABEL_X = 70;
 const VALUE_X = 320;
-const ROW_H = 24;
+const ROW_H = 22;
+
+/** Largest size (down to minSize) at which text fits maxWidth on one line. */
+const fitSize = (doc, text, font, maxSize, minSize, maxWidth) => {
+  doc.font(font);
+  let s = maxSize;
+  while (s > minSize && doc.fontSize(s).widthOfString(text) > maxWidth) s -= 0.5;
+  return s;
+};
 
 const drawCheckbox = (doc, x, y, checked, color = C.green) => {
   doc.save().lineWidth(1.2).strokeColor(C.navy).roundedRect(x, y, 12, 12, 2).stroke();
@@ -173,11 +181,11 @@ const drawCheckbox = (doc, x, y, checked, color = C.green) => {
 };
 
 /** Label left, value in the aligned column; null value = fill-in-by-hand line. */
-const drawRow = (doc, y, label, value) => {
+const drawRow = (doc, y, label, value, opts = {}) => {
   doc.font('Helvetica-Bold').fontSize(11.5).fillColor(C.ink)
     .text(label, LABEL_X, y, { lineBreak: false });
   if (value !== null && value !== undefined) {
-    doc.font('Helvetica').fontSize(11.5).fillColor(C.ink)
+    doc.font(opts.bold ? 'Helvetica-Bold' : 'Helvetica').fontSize(11.5).fillColor(C.ink)
       .text(String(value), VALUE_X, y, { lineBreak: false });
   } else {
     doc.save().lineWidth(0.9).strokeColor(C.line)
@@ -211,11 +219,18 @@ const drawCard = (doc, y, title, rowCount, extraH = 0) => {
   return { rowsY: y + 38, h };
 };
 
-const PITCH =
-  'AI needs to see you to recommend you. My mission is simple: keeping local businesses thriving. ' +
-  'As a visual creator, I know exactly how to use professional photography and video to give Google ' +
-  'the powerful "trust signals" it’s looking for in 2026. Let’s work together to fix the gaps in ' +
-  'your audit and show the community—and the AI—why your business is the best choice.';
+const INTRO =
+  'This audit shows how your business looks today in Google Search and Google’s AI-powered ' +
+  'local search. This is not SEO theory. This is your real first impression: what customers ' +
+  'see, what Google sees, and whether your profile looks active, trusted, and ready to be ' +
+  'recommended.';
+
+// Rendered bold; "No Business Left Behind" gets the navy highlight.
+const INITIATIVE_NAME = 'No Business Left Behind';
+const INITIATIVE_PRE = 'The ';
+const INITIATIVE_POST =
+  ' initiative helps fix outdated profiles with high-end photo, motion video, and ' +
+  'AI-ready Google Business Profile optimization.';
 
 const CONTACT = 'Drop me a text to chat: Nicholas  303-524-0591';
 
@@ -252,13 +267,18 @@ const buildPdf = (business, outDir) => {
   doc.pipe(fs.createWriteStream(file));
   const W = doc.page.width;
 
-  // ---- Header band
-  doc.rect(0, 0, W, 104).fillColor(C.navy).fill();
-  doc.rect(0, 104, W, 3).fillColor(C.gold).fill();
-  doc.font('Helvetica-Bold').fontSize(21).fillColor(C.white)
-    .text('Google Business Profile AI Audit Report', PAGE.left, 30, { width: PAGE.width, align: 'center' });
-  doc.font('Helvetica-Oblique').fontSize(13).fillColor(C.gold)
-    .text('How your business stands today!', PAGE.left, 64, { width: PAGE.width, align: 'center' });
+  // ---- Header band (titles auto-sized to stay on one line each)
+  doc.rect(0, 0, W, 108).fillColor(C.navy).fill();
+  doc.rect(0, 108, W, 3).fillColor(C.gold).fill();
+  const usable = W - 24;
+  const titleText = 'Google Business Profile AI Audit Report';
+  const subText = 'How your business stands today!';
+  const titleSize = fitSize(doc, titleText, 'Helvetica-Bold', 27, 18, usable);
+  const subSize = fitSize(doc, subText, 'Helvetica-Oblique', 18, 12, usable);
+  doc.font('Helvetica-Bold').fontSize(titleSize).fillColor(C.white)
+    .text(titleText, 12, 30, { width: usable, align: 'center', lineBreak: false });
+  doc.font('Helvetica-Oblique').fontSize(subSize).fillColor(C.gold)
+    .text(subText, 12, 70, { width: usable, align: 'center', lineBreak: false });
 
   // ---- Business name
   doc.font('Helvetica').fontSize(9).fillColor(C.gray)
@@ -286,26 +306,26 @@ const buildPdf = (business, outDir) => {
   }
 
   // ---- Reputation card
-  let y = 192;
+  let y = 188;
   let card = drawCard(doc, y, 'Reputation Section', 3);
   let ry = card.rowsY;
   drawRow(doc, ry, 'Overall Rating', business.rating != null ? `${business.rating} / 5` : null); ry += ROW_H;
   drawRow(doc, ry, 'Number of Reviews', business.reviews ?? null); ry += ROW_H;
   drawYesNoRow(doc, ry, 'Reply to Reviews', business.repliesToReviews);
-  y += card.h + 12;
+  y += card.h + 10;
 
   // ---- Update card
   const TAGLINE_H = 16;
   const socialExtra = business.socialLinks?.length ? 14 : 0;
   card = drawCard(doc, y, 'Update Section', 8, socialExtra + TAGLINE_H);
   ry = card.rowsY;
-  drawRow(doc, ry, 'Number of Photos', business.photosCount ?? null); ry += ROW_H;
+  drawRow(doc, ry, 'Number of Photos', business.photosCount ?? null, { bold: true }); ry += ROW_H;
   drawRow(doc, ry, 'Total Views on Photos', null); ry += ROW_H; // manual fill-in
   doc.font('Helvetica-BoldOblique').fontSize(9.5).fillColor(C.navy)
     .text("Let's turn all these photo views into paying customers!", LABEL_X, ry - 6,
       { width: 472, lineBreak: false });
   ry += TAGLINE_H;
-  drawRow(doc, ry, 'Date of last Photo update', business.lastPhotoDate ?? null); ry += ROW_H;
+  drawRow(doc, ry, 'Date of last Photo update', business.lastPhotoDate ?? null, { bold: true }); ry += ROW_H;
   drawYesNoRow(doc, ry, 'Video', business.hasVideo); ry += ROW_H;
   drawYesNoRow(doc, ry, 'Posts/Updates', null); ry += ROW_H; // not publicly visible — manual
   drawRow(doc, ry, 'Date of last Post', null); ry += ROW_H; // manual
@@ -316,16 +336,27 @@ const buildPdf = (business, outDir) => {
       .text(`Found: ${business.socialLinks.join('   ')}`, LABEL_X, ry - 8,
         { width: 472, height: 18, ellipsis: true });
   }
-  y += card.h + 14;
+  y += card.h + 10;
 
-  // ---- Pitch callout
-  doc.font('Helvetica-BoldOblique').fontSize(10.5);
-  const pitchH = doc.heightOfString(PITCH, { width: 462, lineGap: 1.8 }) + 22;
-  doc.roundedRect(PAGE.left, y, PAGE.width, pitchH, 8).fillColor(C.cardBg).fill();
-  doc.rect(PAGE.left, y + 6, 4, pitchH - 12).fillColor(C.gold).fill();
-  doc.font('Helvetica-BoldOblique').fontSize(10.5).fillColor(C.ink)
-    .text(PITCH, LABEL_X, y + 11, { width: 462, lineGap: 1.8 });
-  y += pitchH + 13;
+  // ---- Closing callout: intro paragraph + bold initiative paragraph
+  const TW = 462; const GAP = 1.4; const PAD = 13; const PARA_GAP = 7;
+  const introSize = 9.5; const initSize = 10;
+  doc.font('Helvetica').fontSize(introSize);
+  const introH = doc.heightOfString(INTRO, { width: TW, lineGap: GAP });
+  const initFull = `${INITIATIVE_PRE}${INITIATIVE_NAME}${INITIATIVE_POST}`;
+  doc.font('Helvetica-Bold').fontSize(initSize);
+  const initH = doc.heightOfString(initFull, { width: TW, lineGap: GAP });
+  const boxH = PAD * 2 + introH + PARA_GAP + initH;
+  doc.roundedRect(PAGE.left, y, PAGE.width, boxH, 8).fillColor(C.cardBg).fill();
+  doc.rect(PAGE.left, y + 6, 4, boxH - 12).fillColor(C.gold).fill();
+  doc.font('Helvetica').fontSize(introSize).fillColor(C.ink)
+    .text(INTRO, LABEL_X, y + PAD, { width: TW, lineGap: GAP });
+  const para2Y = y + PAD + introH + PARA_GAP;
+  doc.font('Helvetica-Bold').fontSize(initSize).fillColor(C.ink)
+    .text(INITIATIVE_PRE, LABEL_X, para2Y, { width: TW, lineGap: GAP, continued: true })
+    .fillColor(C.navy).text(INITIATIVE_NAME, { continued: true })
+    .fillColor(C.ink).text(INITIATIVE_POST);
+  y += boxH + 10;
 
   // ---- Contact CTA pill
   doc.font('Helvetica-Bold').fontSize(12.5);
