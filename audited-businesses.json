@@ -298,5 +298,55 @@
     "name": "Los Carboncitos - Aurora",
     "query": "restaurant, aurora, CO",
     "auditedAt": "2026-06-20"
+  },
+  "ChIJh_9W1UB5bIcRiKwEnNlla2o": {
+    "name": "The Plimoth",
+    "query": "restaurant, Denver, CO",
+    "auditedAt": "2026-06-15"
+  },
+  "ChIJB8H2oa1-bIcR0v0lKsQugFw": {
+    "name": "Atomic Cowboy home of Denver Biscuit Co & Fat Sully's NY Pizza",
+    "query": "restaurant, Denver, CO",
+    "auditedAt": "2026-06-15"
+  },
+  "ChIJ5eZBz5d4bIcRV1PXUy8TAx4": {
+    "name": "Savina's Mexican Kitchen - Downtown Denver",
+    "query": "restaurant, Denver, CO",
+    "auditedAt": "2026-06-15"
+  },
+  "ChIJt52ePYF5bIcRN2wL_fdj430": {
+    "name": "West Saloon & Kitchen",
+    "query": "restaurant, Denver, CO",
+    "auditedAt": "2026-06-15"
+  },
+  "ChIJE2oNutF4bIcRNZEeHwOJCxo": {
+    "name": "Stout Street Social",
+    "query": "restaurant, Denver, CO",
+    "auditedAt": "2026-06-15"
+  },
+  "ChIJfbXb8xV5bIcR1EZgVEoh2Vk": {
+    "name": "Wildflower",
+    "query": "restaurant, Denver, CO",
+    "auditedAt": "2026-06-15"
+  },
+  "ChIJj0Z90il_bIcRb_qs7nYRi1k": {
+    "name": "DiFranco's",
+    "query": "restaurant, Denver, CO",
+    "auditedAt": "2026-06-15"
+  },
+  "ChIJpaWx7-d_bIcRWpSch0Y8sVc": {
+    "name": "Riot BBQ",
+    "query": "restaurant, Denver, CO",
+    "auditedAt": "2026-06-15"
+  },
+  "ChIJm5csC9p4bIcRDhpgwqiuxNc": {
+    "name": "Panzano",
+    "query": "restaurant, Denver, CO",
+    "auditedAt": "2026-06-15"
+  },
+  "ChIJo3UKntB4bIcRj9xpG0oqbVU": {
+    "name": "Range Restaurant",
+    "query": "restaurant, Denver, CO",
+    "auditedAt": "2026-06-15"
   }
 }
