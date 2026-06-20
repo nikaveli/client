@@ -49,6 +49,7 @@ const parseArgs = (argv) => {
     else if (key === '--blank') args.blank = true;
     else if (key === '--csv-only') args.csvOnly = true;
     else if (key === '--audited-only') args.auditedOnly = true;
+    else if (key === '--reaudit') args.reaudit = true;
     else if (key.startsWith('--')) args[key.slice(2)] = argv[(i += 1)];
   }
   return args;
@@ -259,6 +260,73 @@ const drawFooter = (doc) => {
     .text('*Colorado Only   303-524-0591', 0, H - 27, { width: W, align: 'center', lineBreak: false });
 };
 
+/** Fetch a single place record (by place_id or "name, city, state" query). */
+const fetchPlace = async (apiKey, query) => {
+  const res = await outscraper(apiKey, '/maps/search-v3', { query, limit: 1, language: 'en', region: 'US' });
+  return res.data?.[0]?.[0] || null;
+};
+
+/** Build the audit business object for a place: rating/reviews from the place
+ *  record, plus owner replies, owner photos, and social links via lookups. */
+const enrichBusiness = async (apiKey, place, args) => {
+  const business = {
+    name: place.name,
+    address: place.address || place.full_address || null,
+    phone: place.phone || null,
+    rating: place.rating ?? null,
+    reviews: place.reviews ?? null,
+    photosCount: null, // owner-uploaded count, filled from the photos lookup
+    hasWebsite: Boolean(place.website || place.site),
+    repliesToReviews: null,
+    lastPhotoDate: null,
+    hasVideo: null,
+    hasSocials: null,
+    socialLinks: [],
+  };
+
+  if (!args.skipReviews && place.place_id && (place.reviews ?? 0) > 0) {
+    try {
+      const r = await outscraper(apiKey, '/maps/reviews-v3', {
+        query: place.place_id, reviewsLimit: REVIEWS_SAMPLE, sort: 'newest',
+      });
+      const reviewsData = r.data?.[0]?.reviews_data || [];
+      if (reviewsData.length) business.repliesToReviews = reviewsData.some((rev) => rev.owner_answer);
+    } catch (err) { console.log(`  ! reviews lookup failed: ${err.message}`); }
+  }
+
+  if (!args.skipPhotos && place.place_id && (place.photos_count ?? 0) > 0) {
+    try {
+      // Only owner-uploaded media counts as profile activity — customer
+      // photos are excluded, matching the "by owner" view in Google Maps.
+      const p = await outscraper(apiKey, '/maps/photos-v3', {
+        query: place.place_id, photosLimit: OWNER_PHOTOS_LIMIT, tag: 'by_owner',
+      });
+      const photos = p.data?.[0]?.[0]?.photos_data || [];
+      business.photosCount = photos.length;
+      const dates = photos.map((ph) => new Date(ph.photo_date)).filter((d) => !Number.isNaN(d));
+      if (dates.length) business.lastPhotoDate = new Date(Math.max(...dates)).toLocaleDateString('en-US');
+      business.hasVideo = photos.some((ph) => ph.photo_source_video);
+    } catch (err) { console.log(`  ! photos lookup failed: ${err.message}`); }
+  }
+
+  const site = place.website || place.site;
+  if (!args.skipContacts && site) {
+    try {
+      const domain = new URL(site).hostname.replace(/^www\./, '');
+      const c = await outscraper(apiKey, '/emails-and-contacts', { query: domain });
+      const socials = c.data?.[0]?.socials || {};
+      // Website builders leak their own social links into scraped pages.
+      const junk = /(squarespace|wix|shopify|godaddy|wordpress|weebly|duda|jimdo)/i;
+      const links = Object.values(socials).filter(Boolean).filter((l) => !junk.test(l));
+      // Only a confident "yes" gets auto-checked; otherwise leave blank to verify by hand.
+      business.hasSocials = links.length > 0 ? true : null;
+      business.socialLinks = links.slice(0, 4);
+    } catch (err) { console.log(`  ! contacts lookup failed: ${err.message}`); }
+  }
+
+  return business;
+};
+
 const buildPdf = (business, outDir) => {
   const doc = new PDFDocument({ size: 'LETTER', margin: 0 });
   const safeName = (business.name || 'Blank-Audit-Template')
@@ -430,6 +498,42 @@ const main = async () => {
     return;
   }
 
+  // --reaudit: re-run the full audit on exactly the businesses already in the
+  // registry for this query (looked up by place_id), regenerating their PDFs
+  // with fresh data. Useful for refreshing a market with the latest report.
+  if (args.reaudit) {
+    const registry = loadRegistry();
+    const q = `${args.category}, ${args.city}, ${args.state}`;
+    const targets = Object.entries(registry)
+      .filter(([, v]) => (v.query || '').toLowerCase() === q.toLowerCase());
+    if (!targets.length) {
+      console.error(`No audited businesses found for "${q}" in audited-businesses.json.`);
+      process.exit(1);
+    }
+    console.log(`Re-auditing ${targets.length} businesses for "${q}"...\n`);
+    const routeRows = [];
+    let done = 0;
+    for (const [key, entry] of targets) {
+      const lookup = key.startsWith('name:') ? `${entry.name}, ${args.city}, ${args.state}` : key;
+      const place = await fetchPlace(apiKey, lookup);
+      if (!place || !place.name) { console.log(`  ! not found, skipped: ${entry.name}`); continue; }
+      console.log(`Re-auditing: ${place.name}`);
+      routeRows.push(addressFields(place));
+      const business = await enrichBusiness(apiKey, place, args);
+      const file = buildPdf(business, outDir);
+      console.log(`  ✓ ${path.relative(process.cwd(), file)}`);
+      registry[key] = { name: place.name, query: entry.query, auditedAt: new Date().toISOString().slice(0, 10) };
+      saveRegistry(registry);
+      done += 1;
+    }
+    if (routeRows.length) {
+      const csv = writeRouteCsv(routeRows, outDir);
+      console.log(`  ✓ route file: ${path.relative(process.cwd(), csv)}`);
+    }
+    console.log(`\nDone. Re-audited ${done} businesses in ${path.relative(process.cwd(), outDir)}/`);
+    return;
+  }
+
   // Businesses audited in past runs are skipped, so each run yields fresh
   // prospects. The search pool grows with the registry to reach deeper into
   // the results; place records are the cheapest part of the run.
@@ -468,64 +572,7 @@ const main = async () => {
   for (const place of independents) {
     console.log(`Auditing: ${place.name}`);
     routeRows.push(addressFields(place));
-    const business = {
-      name: place.name,
-      address: place.address || place.full_address || null,
-      phone: place.phone || null,
-      rating: place.rating ?? null,
-      reviews: place.reviews ?? null,
-      photosCount: null, // owner-uploaded count, filled from the photos lookup
-      hasWebsite: Boolean(place.website || place.site),
-      repliesToReviews: null,
-      lastPhotoDate: null,
-      hasVideo: null,
-      hasSocials: null,
-      socialLinks: [],
-    };
-
-    if (!args.skipReviews && place.place_id && (place.reviews ?? 0) > 0) {
-      try {
-        const r = await outscraper(apiKey, '/maps/reviews-v3', {
-          query: place.place_id, reviewsLimit: REVIEWS_SAMPLE, sort: 'newest',
-        });
-        const reviewsData = r.data?.[0]?.reviews_data || [];
-        if (reviewsData.length) {
-          business.repliesToReviews = reviewsData.some((rev) => rev.owner_answer);
-        }
-      } catch (err) { console.log(`  ! reviews lookup failed: ${err.message}`); }
-    }
-
-    if (!args.skipPhotos && place.place_id && (place.photos_count ?? 0) > 0) {
-      try {
-        // Only owner-uploaded media counts as profile activity — customer
-        // photos are excluded, matching the "by owner" view in Google Maps.
-        const p = await outscraper(apiKey, '/maps/photos-v3', {
-          query: place.place_id, photosLimit: OWNER_PHOTOS_LIMIT, tag: 'by_owner',
-        });
-        const photos = p.data?.[0]?.[0]?.photos_data || [];
-        business.photosCount = photos.length;
-        const dates = photos.map((ph) => new Date(ph.photo_date)).filter((d) => !Number.isNaN(d));
-        if (dates.length) {
-          business.lastPhotoDate = new Date(Math.max(...dates)).toLocaleDateString('en-US');
-        }
-        business.hasVideo = photos.some((ph) => ph.photo_source_video);
-      } catch (err) { console.log(`  ! photos lookup failed: ${err.message}`); }
-    }
-
-    const site = place.website || place.site;
-    if (!args.skipContacts && site) {
-      try {
-        const domain = new URL(site).hostname.replace(/^www\./, '');
-        const c = await outscraper(apiKey, '/emails-and-contacts', { query: domain });
-        const socials = c.data?.[0]?.socials || {};
-        // Website builders leak their own social links into scraped pages.
-        const junk = /(squarespace|wix|shopify|godaddy|wordpress|weebly|duda|jimdo)/i;
-        const links = Object.values(socials).filter(Boolean).filter((l) => !junk.test(l));
-        // Only a confident "yes" gets auto-checked; otherwise leave blank to verify by hand.
-        business.hasSocials = links.length > 0 ? true : null;
-        business.socialLinks = links.slice(0, 4);
-      } catch (err) { console.log(`  ! contacts lookup failed: ${err.message}`); }
-    }
+    const business = await enrichBusiness(apiKey, place, args);
 
     const file = buildPdf(business, outDir);
     console.log(`  ✓ ${path.relative(process.cwd(), file)}`);
