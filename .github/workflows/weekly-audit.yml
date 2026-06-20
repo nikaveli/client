@@ -6,6 +6,13 @@ on:
     - cron: '0 14 * * 1'
   workflow_dispatch:
     inputs:
+      mode:
+        description: 'new = find fresh prospects; reaudit = re-run a market already audited'
+        type: choice
+        options:
+          - new
+          - reaudit
+        default: new
       category:
         description: Business category (e.g. restaurant, dentist, salon)
         default: restaurant
@@ -16,7 +23,7 @@ on:
         description: State code
         default: CO
       limit:
-        description: Max businesses (up to 50)
+        description: Max businesses, up to 50 (ignored for reaudit)
         default: '10'
 
 jobs:
@@ -39,6 +46,7 @@ jobs:
           OUTSCRAPER_API_KEY: ${{ secrets.OUTSCRAPER_API_KEY }}
         run: >
           node tools/prospect-audit.js
+          ${{ github.event.inputs.mode == 'reaudit' && '--reaudit' || '' }}
           --category "${{ github.event.inputs.category || 'restaurant' }}"
           --city "${{ github.event.inputs.city || 'Denver' }}"
           --state "${{ github.event.inputs.state || 'CO' }}"
