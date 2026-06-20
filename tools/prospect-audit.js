@@ -33,7 +33,9 @@ const PDFDocument = require('pdfkit');
 const KNOWN_FRANCHISES = require('./franchises');
 
 const API_BASE = 'https://api.app.outscraper.com';
-const REVIEWS_SAMPLE = 10; // newest reviews checked for owner replies
+const REVIEWS_SAMPLE = 40; // reviews checked for owner replies (the newest
+// reviews are often not yet replied to, so a small sample misses businesses
+// that do reply — 40 reliably distinguishes repliers from non-repliers)
 const OWNER_PHOTOS_LIMIT = 1000; // max owner-uploaded photos fetched per business
 
 // ---------------------------------------------------------------- helpers
@@ -287,7 +289,7 @@ const enrichBusiness = async (apiKey, place, args) => {
   if (!args.skipReviews && place.place_id && (place.reviews ?? 0) > 0) {
     try {
       const r = await outscraper(apiKey, '/maps/reviews-v3', {
-        query: place.place_id, reviewsLimit: REVIEWS_SAMPLE, sort: 'newest',
+        query: place.place_id, reviewsLimit: REVIEWS_SAMPLE,
       });
       const reviewsData = r.data?.[0]?.reviews_data || [];
       if (reviewsData.length) business.repliesToReviews = reviewsData.some((rev) => rev.owner_answer);
