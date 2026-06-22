@@ -348,5 +348,55 @@
     "name": "Range Restaurant",
     "query": "restaurant, Denver, CO",
     "auditedAt": "2026-06-15"
+  },
+  "ChIJ59c0J9B4bIcRP7IDgFozjiw": {
+    "name": "The Corner Office Restaurant + Martini Bar",
+    "query": "restaurant, Denver, CO",
+    "auditedAt": "2026-06-22"
+  },
+  "ChIJofYJz9Z4bIcRAJTJ-IaWt74": {
+    "name": "Appaloosa Grill",
+    "query": "restaurant, Denver, CO",
+    "auditedAt": "2026-06-22"
+  },
+  "ChIJjcwWKuh4bIcRcp_rthqfDdQ": {
+    "name": "The Pig & The Sprout",
+    "query": "restaurant, Denver, CO",
+    "auditedAt": "2026-06-22"
+  },
+  "ChIJP2BPhNB4bIcRE1_eWmOMGg4": {
+    "name": "Menya Noodle Bar",
+    "query": "restaurant, Denver, CO",
+    "auditedAt": "2026-06-22"
+  },
+  "ChIJCSDm0yl_bIcRlzjsNg7b1tA": {
+    "name": "Dazzle Denver",
+    "query": "restaurant, Denver, CO",
+    "auditedAt": "2026-06-22"
+  },
+  "ChIJZwKtN43fpIYRNriFYQt7K8o": {
+    "name": "Dine with Roilty - Private Chef Denver - Cannabis Dinners and Cooking Classes",
+    "query": "restaurant, Denver, CO",
+    "auditedAt": "2026-06-22"
+  },
+  "ChIJte-nk115bIcR9c9h2j_tpK8": {
+    "name": "Chopstickers",
+    "query": "restaurant, Denver, CO",
+    "auditedAt": "2026-06-22"
+  },
+  "ChIJL_MDXCp_bIcREoe0XPiCsXM": {
+    "name": "Fire Restaurant & Lounge",
+    "query": "restaurant, Denver, CO",
+    "auditedAt": "2026-06-22"
+  },
+  "ChIJS-Fwnc55bIcRYHxtAaqvHw4": {
+    "name": "Kealoha's BBQ",
+    "query": "restaurant, Denver, CO",
+    "auditedAt": "2026-06-22"
+  },
+  "ChIJv63RTpx5bIcRsqvEYI5koyI": {
+    "name": "3 Margaritas Downtown Cocina Mexicana",
+    "query": "restaurant, Denver, CO",
+    "auditedAt": "2026-06-22"
   }
 }
