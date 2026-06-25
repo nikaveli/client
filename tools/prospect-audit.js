@@ -387,7 +387,7 @@ const buildPdf = (business, outDir) => {
   // ---- Update card
   const TAGLINE_H = 16;
   const socialExtra = business.socialLinks?.length ? 14 : 0;
-  card = drawCard(doc, y, 'Update Section', 8, socialExtra + TAGLINE_H);
+  card = drawCard(doc, y, 'Update Section', 9, socialExtra + TAGLINE_H);
   ry = card.rowsY;
   drawRow(doc, ry, 'Number of Photos', business.photosCount ?? null, { bold: true }); ry += ROW_H;
   drawRow(doc, ry, 'Total Views on Photos', null); ry += ROW_H; // manual fill-in
@@ -396,6 +396,7 @@ const buildPdf = (business, outDir) => {
       { width: 472, lineBreak: false });
   ry += TAGLINE_H;
   drawRow(doc, ry, 'Date of last Photo update', business.lastPhotoDate ?? null, { bold: true }); ry += ROW_H;
+  drawYesNoRow(doc, ry, '360° Photos or Virtual Tour', null); ry += ROW_H; // manual
   drawYesNoRow(doc, ry, 'Video', business.hasVideo); ry += ROW_H;
   drawYesNoRow(doc, ry, 'Posts/Updates', null); ry += ROW_H; // not publicly visible — manual
   drawRow(doc, ry, 'Date of last Post', null); ry += ROW_H; // manual
