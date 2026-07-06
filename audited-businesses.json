@@ -448,5 +448,55 @@
     "name": "Xiquita Restaurante y Bar",
     "query": "restaurant, Denver, CO",
     "auditedAt": "2026-06-29"
+  },
+  "ChIJC4cKadd4bIcRgbLBZ79ZiP8": {
+    "name": "Guard and Grace",
+    "query": "restaurant, Denver, CO",
+    "auditedAt": "2026-07-06"
+  },
+  "ChIJkV7MOQB5bIcRtJ3mIsD3Sn4": {
+    "name": "Pasque",
+    "query": "restaurant, Denver, CO",
+    "auditedAt": "2026-07-06"
+  },
+  "ChIJiZdhRjR_bIcRcPMnysmKymQ": {
+    "name": "Buckhorn Exchange",
+    "query": "restaurant, Denver, CO",
+    "auditedAt": "2026-07-06"
+  },
+  "ChIJa9KxEsN4bIcRSwNJaUiFiuc": {
+    "name": "Venice",
+    "query": "restaurant, Denver, CO",
+    "auditedAt": "2026-07-06"
+  },
+  "ChIJD9tK3St5bIcRdNXPCJK8oqU": {
+    "name": "Park & Co",
+    "query": "restaurant, Denver, CO",
+    "auditedAt": "2026-07-06"
+  },
+  "ChIJp_NsT_h5bIcRnDY0uCkKRCw": {
+    "name": "Teachers' Lounge Food + Drink",
+    "query": "restaurant, Denver, CO",
+    "auditedAt": "2026-07-06"
+  },
+  "ChIJa8LR2bx-bIcRKq_mJTlas_Q": {
+    "name": "Barolo Grill",
+    "query": "restaurant, Denver, CO",
+    "auditedAt": "2026-07-06"
+  },
+  "ChIJfQpFkDx5bIcRGnDZ-s_yQnE": {
+    "name": "Ambler",
+    "query": "restaurant, Denver, CO",
+    "auditedAt": "2026-07-06"
+  },
+  "ChIJe1TNUeuHa4cR317OrqdhfNw": {
+    "name": "Paperboy Denver",
+    "query": "restaurant, Denver, CO",
+    "auditedAt": "2026-07-06"
+  },
+  "ChIJl26sKwB5bIcRPSsfRER0_bg": {
+    "name": "Corsica Wine Bar",
+    "query": "restaurant, Denver, CO",
+    "auditedAt": "2026-07-06"
   }
 }
