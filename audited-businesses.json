@@ -498,5 +498,55 @@
     "name": "Corsica Wine Bar",
     "query": "restaurant, Denver, CO",
     "auditedAt": "2026-07-06"
+  },
+  "ChIJtw49mQR5bIcRX0hv-6R5mTQ": {
+    "name": "Acova",
+    "query": "restaurant, Denver, CO",
+    "auditedAt": "2026-07-13"
+  },
+  "ChIJPQgXCsN4bIcR6RnbbBZmgms": {
+    "name": "Ultreia",
+    "query": "restaurant, Denver, CO",
+    "auditedAt": "2026-07-13"
+  },
+  "ChIJsZiy8I55bIcR-YXK_6oJ54M": {
+    "name": "Nola Jane Restaurant & Bar",
+    "query": "restaurant, Denver, CO",
+    "auditedAt": "2026-07-13"
+  },
+  "ChIJZXa4ikd5bIcR_nujflGq-Ak": {
+    "name": "Oishii Ramen",
+    "query": "restaurant, Denver, CO",
+    "auditedAt": "2026-07-13"
+  },
+  "ChIJEbr3a-F5bIcRACQb3Gz8NHs": {
+    "name": "Qué Rico Mexican Restaurant",
+    "query": "restaurant, Denver, CO",
+    "auditedAt": "2026-07-13"
+  },
+  "ChIJ9_JLVDF5bIcRRBpYTmskAgk": {
+    "name": "PokeClub",
+    "query": "restaurant, Denver, CO",
+    "auditedAt": "2026-07-13"
+  },
+  "ChIJ97BI5sV5bIcRbxRz-Unx0fU": {
+    "name": "Woodie Fisher Kitchen & Bar",
+    "query": "restaurant, Denver, CO",
+    "auditedAt": "2026-07-13"
+  },
+  "ChIJhX90ku9-bIcRdBE6VQRav6g": {
+    "name": "Restaurant Olivia",
+    "query": "restaurant, Denver, CO",
+    "auditedAt": "2026-07-13"
+  },
+  "ChIJk4myOkV5bIcRID-6v93bkSk": {
+    "name": "Kyoto Ramen",
+    "query": "restaurant, Denver, CO",
+    "auditedAt": "2026-07-13"
+  },
+  "ChIJDWLSLdF4bIcRHBJ5hu9C_DM": {
+    "name": "Otra Vez Cantina",
+    "query": "restaurant, Denver, CO",
+    "auditedAt": "2026-07-13"
   }
 }
