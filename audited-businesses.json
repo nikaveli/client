@@ -648,5 +648,55 @@
     "name": "El Camino",
     "query": "restaurant, Aurora, CO",
     "auditedAt": "2026-07-18"
+  },
+  "ChIJQQaZWip_bIcRWBSp33Acsq8": {
+    "name": "ZEPS EPIQ Sandwiches",
+    "query": "restaurant, Denver, CO",
+    "auditedAt": "2026-07-20"
+  },
+  "ChIJr9FosCp5bIcRXRpl38vxsDQ": {
+    "name": "Pig and Tiger",
+    "query": "restaurant, Denver, CO",
+    "auditedAt": "2026-07-20"
+  },
+  "ChIJ8RjWWCt_bIcRpUqVOssahHw": {
+    "name": "Dozens",
+    "query": "restaurant, Denver, CO",
+    "auditedAt": "2026-07-20"
+  },
+  "ChIJhw7HbNB4bIcR1RYprjjGutM": {
+    "name": "Sam's No. 3",
+    "query": "restaurant, Denver, CO",
+    "auditedAt": "2026-07-20"
+  },
+  "ChIJR95b4Tx5bIcRTZ6QJpebTfs": {
+    "name": "Lazo Empanadas",
+    "query": "restaurant, Denver, CO",
+    "auditedAt": "2026-07-20"
+  },
+  "ChIJH6CQvKJ_bIcR44hf_IjM7xI": {
+    "name": "Cabrón Carbón - Taquería & Galería",
+    "query": "restaurant, Denver, CO",
+    "auditedAt": "2026-07-20"
+  },
+  "ChIJS96maGJ5bIcRJRI1kCMY45Q": {
+    "name": "Chez Maggy",
+    "query": "restaurant, Denver, CO",
+    "auditedAt": "2026-07-20"
+  },
+  "ChIJR-wzrg95bIcRxZqDmaWQ8ww": {
+    "name": "PokeWorld",
+    "query": "restaurant, Denver, CO",
+    "auditedAt": "2026-07-20"
+  },
+  "ChIJUXazLgB5bIcRUIZorL4LMFU": {
+    "name": "Luchador Taco & More",
+    "query": "restaurant, Denver, CO",
+    "auditedAt": "2026-07-20"
+  },
+  "ChIJgzygBCl5bIcRMMMFtJzroBw": {
+    "name": "Colorado Campfire",
+    "query": "restaurant, Denver, CO",
+    "auditedAt": "2026-07-20"
   }
 }
