@@ -798,5 +798,55 @@
     "name": "Gaucho Parrilla",
     "query": "restaurant, Arvada, CO",
     "auditedAt": "2026-07-23"
+  },
+  "ChIJ6yPEWAB5bIcRrI0hfgM27Sw": {
+    "name": "The 16th Street Commons",
+    "query": "restaurant, Denver, CO",
+    "auditedAt": "2026-07-27"
+  },
+  "ChIJZ_3LHK55bIcRrg8N9mL4h_c": {
+    "name": "Bombshells Restaurant & Bar Denver",
+    "query": "restaurant, Denver, CO",
+    "auditedAt": "2026-07-27"
+  },
+  "ChIJ7buhzyl_bIcRGEpqDehebGk": {
+    "name": "The 9th Door Capitol Hill",
+    "query": "restaurant, Denver, CO",
+    "auditedAt": "2026-07-27"
+  },
+  "ChIJHwJJbNV-bIcRPRt9CACJxTs": {
+    "name": "City O' City",
+    "query": "restaurant, Denver, CO",
+    "auditedAt": "2026-07-27"
+  },
+  "ChIJcXhaQSt5bIcR2b8pEtn7JMQ": {
+    "name": "La Abeja Restaurant",
+    "query": "restaurant, Denver, CO",
+    "auditedAt": "2026-07-27"
+  },
+  "ChIJi9f67894bIcRRrpTdCLK93o": {
+    "name": "The Nickel",
+    "query": "restaurant, Denver, CO",
+    "auditedAt": "2026-07-27"
+  },
+  "ChIJjcsDn5F4bIcRRxZVrn7MZ7M": {
+    "name": "duo Restaurant",
+    "query": "restaurant, Denver, CO",
+    "auditedAt": "2026-07-27"
+  },
+  "ChIJi0--5dZ4bIcRlRc1J3Q7a6E": {
+    "name": "Corporate Deli and Grill",
+    "query": "restaurant, Denver, CO",
+    "auditedAt": "2026-07-27"
+  },
+  "ChIJdf7vwDB5bIcRUKbqopeByXc": {
+    "name": "Revival Denver Public House",
+    "query": "restaurant, Denver, CO",
+    "auditedAt": "2026-07-27"
+  },
+  "ChIJW9hdENF4bIcRi5Q77XyiWGc": {
+    "name": "Le Méridien Denver Downtown",
+    "query": "restaurant, Denver, CO",
+    "auditedAt": "2026-07-27"
   }
 }
