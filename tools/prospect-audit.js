@@ -165,6 +165,24 @@ const C = {
   white: '#ffffff',
 };
 
+// LocalFirst brand typography — Barlow Condensed (display/headers, 900+600) and
+// Barlow (body/italic). TTFs vendored in tools/fonts (OFL). Registered per-doc.
+const FONT_DIR = path.join(__dirname, 'fonts');
+const F = {
+  display: 'BC-Black', // Barlow Condensed Black — report title, business name
+  head: 'BC-SemiBold', // Barlow Condensed SemiBold — section titles, CTA, footer brand
+  body: 'Barlow', // Barlow Regular — values, paragraphs, small text
+  bodyBold: 'Barlow-SemiBold', // Barlow SemiBold — row labels, bold values
+  italic: 'Barlow-Italic', // Barlow Italic — subtitle + tagline accents
+};
+const registerFonts = (doc) => {
+  doc.registerFont(F.display, path.join(FONT_DIR, 'BarlowCondensed-Black.ttf'));
+  doc.registerFont(F.head, path.join(FONT_DIR, 'BarlowCondensed-SemiBold.ttf'));
+  doc.registerFont(F.body, path.join(FONT_DIR, 'Barlow-Regular.ttf'));
+  doc.registerFont(F.bodyBold, path.join(FONT_DIR, 'Barlow-SemiBold.ttf'));
+  doc.registerFont(F.italic, path.join(FONT_DIR, 'Barlow-Italic.ttf'));
+};
+
 // Fixed layout grid: labels at LABEL_X, values/checkboxes aligned at VALUE_X.
 const PAGE = { left: 50, width: 512 };
 const LABEL_X = 70;
@@ -190,10 +208,10 @@ const drawCheckbox = (doc, x, y, checked, color = C.green) => {
 
 /** Label left, value in the aligned column; null value = fill-in-by-hand line. */
 const drawRow = (doc, y, label, value, opts = {}) => {
-  doc.font('Helvetica-Bold').fontSize(11.5).fillColor(C.ink)
+  doc.font(F.bodyBold).fontSize(11.5).fillColor(C.ink)
     .text(label, LABEL_X, y, { lineBreak: false });
   if (value !== null && value !== undefined) {
-    doc.font(opts.bold ? 'Helvetica-Bold' : 'Helvetica').fontSize(11.5).fillColor(C.ink)
+    doc.font(opts.bold ? F.bodyBold : F.body).fontSize(11.5).fillColor(C.ink)
       .text(String(value), VALUE_X, y, { lineBreak: false });
   } else {
     doc.save().lineWidth(0.9).strokeColor(C.line)
@@ -203,10 +221,10 @@ const drawRow = (doc, y, label, value, opts = {}) => {
 
 /** Label left, Yes/No checkboxes in the aligned column. true=Yes, false=No, null=blank. */
 const drawYesNoRow = (doc, y, label, checked) => {
-  doc.font('Helvetica-Bold').fontSize(11.5).fillColor(C.ink)
+  doc.font(F.bodyBold).fontSize(11.5).fillColor(C.ink)
     .text(label, LABEL_X, y, { lineBreak: false });
   drawCheckbox(doc, VALUE_X, y - 1, checked === true, C.green);
-  doc.font('Helvetica').fontSize(11.5).fillColor(C.ink)
+  doc.font(F.body).fontSize(11.5).fillColor(C.ink)
     .text('Yes', VALUE_X + 18, y, { lineBreak: false });
   drawCheckbox(doc, VALUE_X + 70, y - 1, checked === false, C.red);
   doc.text('No', VALUE_X + 88, y, { lineBreak: false });
@@ -221,8 +239,8 @@ const drawCard = (doc, y, title, rowCount, extraH = 0) => {
   doc.rect(PAGE.left, y + 14, PAGE.width, 14).fillColor(C.cardBg).fill();
   doc.roundedRect(PAGE.left, y, PAGE.width, h, 8).lineWidth(1).strokeColor(C.cardBorder).stroke();
   doc.rect(PAGE.left, y + 6, 4, 16).fillColor(C.gold).fill();
-  doc.font('Helvetica-Bold').fontSize(12).fillColor(C.blue)
-    .text(title.toUpperCase(), LABEL_X - 6, y + 8, { characterSpacing: 1, lineBreak: false });
+  doc.font(F.head).fontSize(13).fillColor(C.blue)
+    .text(title.toUpperCase(), LABEL_X - 6, y + 9, { characterSpacing: 1, lineBreak: false });
   doc.restore();
   return { rowsY: y + 38, h };
 };
@@ -250,20 +268,20 @@ const drawFooter = (doc) => {
 
   const brand = 'LocalFirst';
   const url = '   www.LocalFirstOnline.com';
-  doc.font('Helvetica-Bold').fontSize(12);
+  doc.font(F.head).fontSize(13);
   const brandWidth = doc.widthOfString(brand);
-  doc.font('Helvetica');
+  doc.font(F.body);
   const urlWidth = doc.widthOfString(url);
   const startX = (W - brandWidth - urlWidth) / 2;
-  doc.font('Helvetica-Bold').fillColor(C.white)
+  doc.font(F.head).fillColor(C.white)
     .text(brand, startX, H - 48, { lineBreak: false, width: brandWidth + 4 });
-  doc.font('Helvetica').fillColor(C.gold)
+  doc.font(F.body).fillColor(C.gold)
     .text(url, startX + brandWidth, H - 48, {
       lineBreak: false, width: urlWidth + 4,
       link: 'https://www.LocalFirstOnline.com', underline: true,
     });
 
-  doc.font('Helvetica').fontSize(9).fillColor(C.footerSub)
+  doc.font(F.body).fontSize(9).fillColor(C.footerSub)
     .text('*Colorado Only   303-524-0591', 0, H - 27, { width: W, align: 'center', lineBreak: false });
 };
 
@@ -351,6 +369,7 @@ const enrichBusiness = async (apiKey, place, args) => {
 
 const buildPdf = (business, outDir) => {
   const doc = new PDFDocument({ size: 'LETTER', margin: 0 });
+  registerFonts(doc);
   const safeName = (business.name || 'Blank-Audit-Template')
     .replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '');
   const file = path.join(outDir, `${safeName}.pdf`);
@@ -363,18 +382,18 @@ const buildPdf = (business, outDir) => {
   const usable = W - 24;
   const titleText = 'Google Business Profile AI Audit Report';
   const subText = 'How your business stands today!';
-  const titleSize = fitSize(doc, titleText, 'Helvetica-Bold', 27, 18, usable);
-  const subSize = fitSize(doc, subText, 'Helvetica-Oblique', 18, 12, usable);
-  doc.font('Helvetica-Bold').fontSize(titleSize).fillColor(C.white)
-    .text(titleText, 12, 30, { width: usable, align: 'center', lineBreak: false });
-  doc.font('Helvetica-Oblique').fontSize(subSize).fillColor(C.gold)
-    .text(subText, 12, 70, { width: usable, align: 'center', lineBreak: false });
+  const titleSize = fitSize(doc, titleText, F.display, 31, 20, usable);
+  const subSize = fitSize(doc, subText, F.italic, 18, 12, usable);
+  doc.font(F.display).fontSize(titleSize).fillColor(C.white)
+    .text(titleText, 12, 28, { width: usable, align: 'center', lineBreak: false });
+  doc.font(F.italic).fontSize(subSize).fillColor(C.gold)
+    .text(subText, 12, 72, { width: usable, align: 'center', lineBreak: false });
 
   // ---- Business name
-  doc.font('Helvetica').fontSize(9).fillColor(C.gray)
+  doc.font(F.bodyBold).fontSize(9).fillColor(C.gray)
     .text('BUSINESS NAME', PAGE.left, 124, { width: PAGE.width, align: 'center', characterSpacing: 1.5 });
   if (business.name) {
-    doc.font('Helvetica-Bold').fontSize(19).fillColor(C.ink)
+    doc.font(F.display).fontSize(21).fillColor(C.ink)
       .text(business.name, PAGE.left, 138, { width: PAGE.width, align: 'center' });
   } else {
     doc.save().lineWidth(0.9).strokeColor(C.line)
@@ -386,7 +405,7 @@ const buildPdf = (business, outDir) => {
   if (contactParts.length) {
     const contact = contactParts.join('   •   ');
     let cf = 11;
-    doc.font('Helvetica');
+    doc.font(F.body);
     while (cf > 7 && doc.fontSize(cf).widthOfString(contact) > PAGE.width) cf -= 0.5;
     doc.fontSize(cf).fillColor(C.gray)
       .text(contact, PAGE.left, 164, { width: PAGE.width, align: 'center', lineBreak: false });
@@ -411,7 +430,7 @@ const buildPdf = (business, outDir) => {
   ry = card.rowsY;
   drawRow(doc, ry, 'Number of Photos', business.photosCount ?? null, { bold: true }); ry += ROW_H;
   drawRow(doc, ry, 'Total Views on Photos', null); ry += ROW_H; // manual fill-in
-  doc.font('Helvetica-BoldOblique').fontSize(9.5).fillColor(C.blue)
+  doc.font(F.italic).fontSize(10).fillColor(C.blue)
     .text("Let's turn all these photo views into paying customers!", LABEL_X, ry - 6,
       { width: 472, lineBreak: false });
   ry += TAGLINE_H;
@@ -423,7 +442,7 @@ const buildPdf = (business, outDir) => {
   drawYesNoRow(doc, ry, 'Website', business.hasWebsite); ry += ROW_H;
   drawYesNoRow(doc, ry, 'Social Media', business.hasSocials); ry += ROW_H;
   if (business.socialLinks?.length) {
-    doc.font('Helvetica').fontSize(8).fillColor(C.gray)
+    doc.font(F.body).fontSize(8).fillColor(C.gray)
       .text(`Found: ${business.socialLinks.join('   ')}`, LABEL_X, ry - 8,
         { width: 472, height: 18, ellipsis: true });
   }
@@ -432,25 +451,25 @@ const buildPdf = (business, outDir) => {
   // ---- Closing callout: intro paragraph + bold initiative paragraph
   const TW = 462; const GAP = 1.4; const PAD = 13; const PARA_GAP = 7;
   const introSize = 9.5; const initSize = 10;
-  doc.font('Helvetica').fontSize(introSize);
+  doc.font(F.body).fontSize(introSize);
   const introH = doc.heightOfString(INTRO, { width: TW, lineGap: GAP });
   const initFull = `${INITIATIVE_PRE}${INITIATIVE_NAME}${INITIATIVE_POST}`;
-  doc.font('Helvetica-Bold').fontSize(initSize);
+  doc.font(F.bodyBold).fontSize(initSize);
   const initH = doc.heightOfString(initFull, { width: TW, lineGap: GAP });
   const boxH = PAD * 2 + introH + PARA_GAP + initH;
   doc.roundedRect(PAGE.left, y, PAGE.width, boxH, 8).fillColor(C.cardBg).fill();
   doc.rect(PAGE.left, y + 6, 4, boxH - 12).fillColor(C.gold).fill();
-  doc.font('Helvetica').fontSize(introSize).fillColor(C.ink)
+  doc.font(F.body).fontSize(introSize).fillColor(C.ink)
     .text(INTRO, LABEL_X, y + PAD, { width: TW, lineGap: GAP });
   const para2Y = y + PAD + introH + PARA_GAP;
-  doc.font('Helvetica-Bold').fontSize(initSize).fillColor(C.ink)
+  doc.font(F.bodyBold).fontSize(initSize).fillColor(C.ink)
     .text(INITIATIVE_PRE, LABEL_X, para2Y, { width: TW, lineGap: GAP, continued: true })
     .fillColor(C.blue).text(INITIATIVE_NAME, { continued: true })
     .fillColor(C.ink).text(INITIATIVE_POST);
   y += boxH + 10;
 
   // ---- Contact CTA pill
-  doc.font('Helvetica-Bold').fontSize(12.5);
+  doc.font(F.head).fontSize(14);
   const ctaW = doc.widthOfString(CONTACT) + 48;
   const ctaX = (W - ctaW) / 2;
   doc.roundedRect(ctaX, y, ctaW, 32, 16).fillColor(C.navy).fill();
