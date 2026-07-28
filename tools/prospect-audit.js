@@ -147,16 +147,21 @@ const isFranchise = (place, allPlaces, extraExcludes) => {
 
 // ------------------------------------------------------------ pdf builder
 
+// LocalFirst five-color brand palette (see root CLAUDE.md §4).
+// Gunmetal = dominant dark fills, YInMn = structural blue, Powder = supporting
+// lines, Light cyan = card/negative space, Burnt sienna = accent/CTA (sparingly).
 const C = {
-  navy: '#16324f',
-  gold: '#f2b33d',
-  ink: '#1f2933',
-  gray: '#7b8794',
-  cardBg: '#f4f7fb',
-  cardBorder: '#d9e2ec',
-  line: '#b3c1d1',
-  green: '#2e7d32',
-  red: '#c62828',
+  navy: '#293241', // Gunmetal — dark header/footer/CTA fills, checkbox strokes
+  blue: '#3D5A80', // YInMn blue — card titles, initiative highlight, taglines
+  gold: '#EE6C4D', // Burnt sienna — accent stripes, links (kept key name for churn)
+  ink: '#293241', // Gunmetal — body text
+  gray: '#6B7A8C', // muted blue-gray — secondary labels
+  cardBg: '#E0FBFC', // Light cyan — card title strip + callout box
+  cardBorder: '#CBDFEA', // light powder — card borders
+  line: '#98C1D9', // Powder blue — fill-in underlines
+  footerSub: '#98C1D9', // Powder blue — footer sub-text
+  green: '#2e7d32', // semantic Yes (kept — functional, not brand)
+  red: '#c62828', // semantic No (kept — functional, not brand)
   white: '#ffffff',
 };
 
@@ -216,7 +221,7 @@ const drawCard = (doc, y, title, rowCount, extraH = 0) => {
   doc.rect(PAGE.left, y + 14, PAGE.width, 14).fillColor(C.cardBg).fill();
   doc.roundedRect(PAGE.left, y, PAGE.width, h, 8).lineWidth(1).strokeColor(C.cardBorder).stroke();
   doc.rect(PAGE.left, y + 6, 4, 16).fillColor(C.gold).fill();
-  doc.font('Helvetica-Bold').fontSize(12).fillColor(C.navy)
+  doc.font('Helvetica-Bold').fontSize(12).fillColor(C.blue)
     .text(title.toUpperCase(), LABEL_X - 6, y + 8, { characterSpacing: 1, lineBreak: false });
   doc.restore();
   return { rowsY: y + 38, h };
@@ -258,7 +263,7 @@ const drawFooter = (doc) => {
       link: 'https://www.LocalFirstOnline.com', underline: true,
     });
 
-  doc.font('Helvetica').fontSize(9).fillColor('#b8c7d9')
+  doc.font('Helvetica').fontSize(9).fillColor(C.footerSub)
     .text('*Colorado Only   303-524-0591', 0, H - 27, { width: W, align: 'center', lineBreak: false });
 };
 
@@ -282,9 +287,24 @@ const enrichBusiness = async (apiKey, place, args) => {
     repliesToReviews: null,
     lastPhotoDate: null,
     hasVideo: null,
+    hasPosts: null, // Google Posts activity, from place.posts when Outscraper returns it
+    lastPostDate: null,
     hasSocials: null,
     socialLinks: [],
   };
+
+  // Google Posts are only present on the place record "for some places" (often
+  // null — see docs/prospect-data-fields.md). Populate when present; leave null
+  // (blank on the report) otherwise, never a false "No" — coverage is unreliable.
+  if (Array.isArray(place.posts) && place.posts.length) {
+    business.hasPosts = true;
+    const postDates = place.posts
+      .map((p) => (p.timestamp ? new Date(p.timestamp * 1000) : null))
+      .filter((d) => d && !Number.isNaN(d));
+    if (postDates.length) {
+      business.lastPostDate = new Date(Math.max(...postDates)).toLocaleDateString('en-US');
+    }
+  }
 
   if (!args.skipReviews && place.place_id && (place.reviews ?? 0) > 0) {
     try {
@@ -391,15 +411,15 @@ const buildPdf = (business, outDir) => {
   ry = card.rowsY;
   drawRow(doc, ry, 'Number of Photos', business.photosCount ?? null, { bold: true }); ry += ROW_H;
   drawRow(doc, ry, 'Total Views on Photos', null); ry += ROW_H; // manual fill-in
-  doc.font('Helvetica-BoldOblique').fontSize(9.5).fillColor(C.navy)
+  doc.font('Helvetica-BoldOblique').fontSize(9.5).fillColor(C.blue)
     .text("Let's turn all these photo views into paying customers!", LABEL_X, ry - 6,
       { width: 472, lineBreak: false });
   ry += TAGLINE_H;
   drawRow(doc, ry, 'Date of last Photo update', business.lastPhotoDate ?? null, { bold: true }); ry += ROW_H;
   drawYesNoRow(doc, ry, '360° Photos or Virtual Tour', null); ry += ROW_H; // manual
   drawYesNoRow(doc, ry, 'Video', business.hasVideo); ry += ROW_H;
-  drawYesNoRow(doc, ry, 'Posts/Updates', null); ry += ROW_H; // not publicly visible — manual
-  drawRow(doc, ry, 'Date of last Post', null); ry += ROW_H; // manual
+  drawYesNoRow(doc, ry, 'Posts/Updates', business.hasPosts); ry += ROW_H; // auto when scrapable, else blank
+  drawRow(doc, ry, 'Date of last Post', business.lastPostDate ?? null); ry += ROW_H; // auto when available
   drawYesNoRow(doc, ry, 'Website', business.hasWebsite); ry += ROW_H;
   drawYesNoRow(doc, ry, 'Social Media', business.hasSocials); ry += ROW_H;
   if (business.socialLinks?.length) {
@@ -425,7 +445,7 @@ const buildPdf = (business, outDir) => {
   const para2Y = y + PAD + introH + PARA_GAP;
   doc.font('Helvetica-Bold').fontSize(initSize).fillColor(C.ink)
     .text(INITIATIVE_PRE, LABEL_X, para2Y, { width: TW, lineGap: GAP, continued: true })
-    .fillColor(C.navy).text(INITIATIVE_NAME, { continued: true })
+    .fillColor(C.blue).text(INITIATIVE_NAME, { continued: true })
     .fillColor(C.ink).text(INITIATIVE_POST);
   y += boxH + 10;
 
@@ -453,7 +473,8 @@ const main = async () => {
     const file = buildPdf({
       name: null, address: null, phone: null, rating: null, reviews: null,
       repliesToReviews: null, photosCount: null, lastPhotoDate: null,
-      hasVideo: null, hasWebsite: null, hasSocials: null, socialLinks: [],
+      hasVideo: null, hasPosts: null, lastPostDate: null,
+      hasWebsite: null, hasSocials: null, socialLinks: [],
     }, outDir);
     console.log(`Blank template: ${path.relative(process.cwd(), file)}`);
     return;
