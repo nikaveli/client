@@ -1023,5 +1023,55 @@
     "name": "Luca",
     "query": "restaurant, Denver, CO",
     "auditedAt": "2026-08-03"
+  },
+  "ChIJ7Ri1z3l_bIcRGE8i3Zx2rAs": {
+    "name": "Alteño",
+    "query": "restaurant, Denver, CO",
+    "auditedAt": "2026-08-10"
+  },
+  "ChIJ0c0sJaZ5bIcRIAnpY0d0aCU": {
+    "name": "EatDenver",
+    "query": "restaurant, Denver, CO",
+    "auditedAt": "2026-08-10"
+  },
+  "ChIJoQTJfet4bIcRTq41TdEDBGE": {
+    "name": "The Bindery",
+    "query": "restaurant, Denver, CO",
+    "auditedAt": "2026-08-10"
+  },
+  "ChIJy5IzrNN4bIcR1K6ccHRSMwo": {
+    "name": "Bar Red",
+    "query": "restaurant, Denver, CO",
+    "auditedAt": "2026-08-10"
+  },
+  "ChIJdbbuwNp4bIcRaR6k6ma0MHQ": {
+    "name": "Blue Agave Grill",
+    "query": "restaurant, Denver, CO",
+    "auditedAt": "2026-08-10"
+  },
+  "ChIJFVuQTriAa4cRZdd11hSSCAc": {
+    "name": "Lookin Good Restaurant and Lounge",
+    "query": "restaurant, Denver, CO",
+    "auditedAt": "2026-08-10"
+  },
+  "ChIJ___vhCl5bIcRjMNMNOB_6ww": {
+    "name": "Gattara",
+    "query": "restaurant, Denver, CO",
+    "auditedAt": "2026-08-10"
+  },
+  "ChIJT6LLNQB_bIcRFlId0L9BFOM": {
+    "name": "Kizaki",
+    "query": "restaurant, Denver, CO",
+    "auditedAt": "2026-08-10"
+  },
+  "ChIJ-bBA9Cx_bIcRBgHpTQh0Pjg": {
+    "name": "Cuba Cuba Cafe & Bar",
+    "query": "restaurant, Denver, CO",
+    "auditedAt": "2026-08-10"
+  },
+  "ChIJHc-Fz6t5bIcR2mOREy6UcMo": {
+    "name": "A5 Steakhouse",
+    "query": "restaurant, Denver, CO",
+    "auditedAt": "2026-08-10"
   }
 }
