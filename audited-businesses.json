@@ -1223,5 +1223,55 @@
     "name": "Jalapeño Deluxe Restaurante",
     "query": "mexican restaurant, Aurora, CO",
     "auditedAt": "2026-08-12"
+  },
+  "ChIJYbtXR0h_bIcRGiAN3IRClYw": {
+    "name": "Salt Water Social",
+    "query": "restaurant, Denver, CO",
+    "auditedAt": "2026-08-17"
+  },
+  "ChIJe7dM3Nt-bIcREiH0mld4gE0": {
+    "name": "Angelo’s Taverna",
+    "query": "restaurant, Denver, CO",
+    "auditedAt": "2026-08-17"
+  },
+  "ChIJm63rjHB5bIcRU3F3LFC7mWg": {
+    "name": "Kawa Ni",
+    "query": "restaurant, Denver, CO",
+    "auditedAt": "2026-08-17"
+  },
+  "ChIJd2rQO8V4bIcR_7hmvjhnPTs": {
+    "name": "Red Square Euro Bistro",
+    "query": "restaurant, Denver, CO",
+    "auditedAt": "2026-08-17"
+  },
+  "ChIJq29HUa15bIcRLETzEiISOrg": {
+    "name": "City Park Tavern",
+    "query": "restaurant, Denver, CO",
+    "auditedAt": "2026-08-17"
+  },
+  "ChIJJZ4fB8t4bIcRltBAoeLZdsY": {
+    "name": "Domo Japanese Country Food Restaurant",
+    "query": "restaurant, Denver, CO",
+    "auditedAt": "2026-08-17"
+  },
+  "ChIJgfEf6Sp5bIcRXGnmTIzshuc": {
+    "name": "Shish Kabob Grill (Sahtain!)",
+    "query": "restaurant, Denver, CO",
+    "auditedAt": "2026-08-17"
+  },
+  "ChIJ3b4sUOx5bIcRjHS3ZtY6QJ8": {
+    "name": "Thai Lanna",
+    "query": "restaurant, Denver, CO",
+    "auditedAt": "2026-08-17"
+  },
+  "ChIJYVuRFdF4bIcRhnRSkCCjaIE": {
+    "name": "Hyatt Regency Denver at Colorado Convention Center",
+    "query": "restaurant, Denver, CO",
+    "auditedAt": "2026-08-17"
+  },
+  "ChIJG3BjLyp_bIcRRPMY9bkF5bs": {
+    "name": "Torchy's Tacos",
+    "query": "restaurant, Denver, CO",
+    "auditedAt": "2026-08-17"
   }
 }
